@@ -1,0 +1,115 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: lightgray;
+}
+
+div {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+}
+
+#first {
+  top: 30px;
+  left: 0;
+  /* background-color: rgb(127, 64, 0); */
+}
+
+#second {
+  top: 150px;
+  left: 0;
+  background-color: rgb(64, 127, 255);
+  border-radius: 50%;
+}
+
+#animated_text {
+  top: 650px;
+  width: 1000px;
+  font-family: Roobert, "Helvetica Neue", Helvetica;
+  font-size: 32px;
+  font-weight: bold;
+  color: rgb(132, 83, 227);
+}
+
+.grid {
+  background-color: rgb(127, 64, 127);
+}
+.grid._1 {
+  left: 0;
+  top: 300px;
+}
+.grid._2 {
+  left: 60px;
+  top: 300px;
+}
+.grid._3 {
+  left: 120px;
+  top: 300px;
+}
+.grid._4 {
+  left: 30px;
+  top: 330px;
+}
+.grid._5 {
+  left: 90px;
+  top: 330px;
+}
+.grid._6 {
+  left: 0;
+  top: 360px;
+}
+.grid._7 {
+  left: 60px;
+  top: 360px;
+}
+.grid._8 {
+  left: 120px;
+  top: 360px;
+}
+
+#fourth {
+  top: 500px;
+  left: 0;
+  background-color: rgb(95, 158, 160);
+}
+
+#fifth {
+  top: 600px;
+  left: 0;
+  background-color: rgb(255, 75, 75);
+}
+
+#sixth {
+  top: 800px;
+  left: 0;
+  background-color: rgb(255, 150, 0);
+}
+
+p {
+  position: relative;
+}
+#p2 {
+  top: 100px;
+}
+#p3 {
+  top: 230px;
+}
+#p4 {
+  top: 410px;
+}
+#p5 {
+  top: 500px;
+}
+
+.ololo-class {
+  border-radius: 50%;
+  background-color: rgb(127, 64, 0);
+}
+
+.trololo-class-name {
+  background-color: blueviolet;
+}
