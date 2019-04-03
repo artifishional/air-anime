@@ -1,15 +1,15 @@
 module.exports = {
-    devtool: "(none)",
-    mode: "development",
-    watch: true,
-    entry: {
-        'debug': './debug/index.js'
-    },
-    output: {
-        path: `${__dirname}/dist`,
-    },
-    module: {
-        /*rules: [
+  devtool: "(none)",
+  mode: "development",
+  watch: true,
+  entry: {
+    debug: "./debug/index.js"
+  },
+  output: {
+    path: `${__dirname}/dist`
+  },
+  module: {
+    /*rules: [
             {
                 test: /\.js$/,
                 exclude: [/node_modules/, /\.loader$/],
@@ -18,5 +18,5 @@ module.exports = {
                 }
             }
         ]*/
-    },
+  }
 };
