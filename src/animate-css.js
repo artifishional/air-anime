@@ -4,6 +4,10 @@ import utils from "./utils";
 
 const followers = new Map();
 
+Array.prototype.matchesCount = function(target) {
+  return this.filter(e => target.includes(e)).length;
+};
+
 export default (view, frames, key) => {
   return stream((emt, { sweep, hook }) => {
     if (!view.map(({ type }) => type).every(e => e === "active")) {
@@ -14,12 +18,12 @@ export default (view, frames, key) => {
 
     sweep.add(() => {
       dom.forEach(e => {
-        const value = followers.get(e) - 1;
-        followers.set(e, value);
-        if (value === 0) {
-          followers.delete(e);
-          anime.remove(e);
-        }
+        debugger;
+        // followers.get(e).value--;
+        // if (followers.get(e).value === 0) {
+        //   followers.delete(e);
+        //   anime.remove(e);
+        // }
       });
     });
 
@@ -116,17 +120,26 @@ export default (view, frames, key) => {
         });
       });
 
+      const animParams = [];
       [...keyframes].forEach(([key, value]) => {
         animeObj[key] = value;
+        animParams.push(key);
       });
 
       const animation = anime(animeObj);
 
       dom.forEach(e => {
         if (!followers.has(e)) {
-          followers.set(e, 1);
+          followers.set(e, [{ anim: animation, params: animParams }]);
         } else {
-          followers.set(e, followers.get(e) + 1);
+          [...followers].forEach(([, anims]) => {
+            anims.forEach(({ anim, params }, i) => {
+              if (params.matchesCount(animParams)) {
+                anim.pause();
+                followers.get(e).splice(i, 1, { anim: animation, params: animParams });
+              }
+            });
+          });
         }
       });
 
