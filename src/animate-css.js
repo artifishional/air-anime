@@ -4,10 +4,6 @@ import utils from "./utils";
 
 const followers = new Map();
 
-Array.prototype.matchesCount = function(target) {
-  return this.filter(e => target.includes(e)).length;
-};
-
 export default (view, frames, key) => {
   return stream((emt, { sweep, hook }) => {
     if (!view.map(({ type }) => type).every(e => e === "active")) {
@@ -133,17 +129,25 @@ export default (view, frames, key) => {
 
       animation = anime(animeObj);
 
+      function matchesCount(a, b) {
+        return a.filter(e => b.includes(e)).length;
+      }
+
       dom.forEach(e => {
-        if (!followers.has(e)) {
-          followers.set(e, [{ anim: animation, params: animParams }]);
-        } else {
-          followers.get(e).forEach(({ anim, params }, i) => {
-            if (params.matchesCount(animParams)) {
+        !followers.has(e) && followers.set(e, []);
+
+        followers.set(
+          e,
+          followers.get(e).filter(({ anim, params }) => {
+            if (matchesCount(params, animParams)) {
               anim.pause();
-              followers.get(e).splice(i, 1, { anim: animation, params: animParams });
+              return false;
             }
-          });
-        }
+            return true;
+          })
+        );
+
+        followers.get(e).push({ anim: animation, params: animParams });
       });
 
       if (start === 0) {

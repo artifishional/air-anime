@@ -2,6 +2,8 @@ import { stream } from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
+let currentAnimation = null;
+
 export default (view, frames, key) => {
   return stream((emt, { sweep, hook }) => {
     if (!view.map(({ type }) => type).every(e => e === "data")) {
@@ -18,6 +20,10 @@ export default (view, frames, key) => {
     sweep.add(() => anime.remove(dom));
 
     hook.add(({ data: [data, { action = "default" }] } = {}) => {
+      if (currentAnimation) {
+        currentAnimation.pause();
+      }
+
       const keyframe = frames.find(([name]) => name === action);
 
       if (!keyframe) {
@@ -105,6 +111,7 @@ export default (view, frames, key) => {
       });
 
       const animation = anime(animeObj);
+      currentAnimation = animation;
       if (start === 0) {
         animation.play();
       } else {

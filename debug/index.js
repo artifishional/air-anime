@@ -208,3 +208,38 @@ hoverable.addEventListener("mouseover", () => {
 hoverable.addEventListener("mouseout", () => {
   popupconnector({ data: [{}, { action: "fade-out" }] });
 });
+
+// ********************
+// text forward - back
+
+document.customData.forwBackText = new Text("0");
+const p = document.createElement("p");
+p.id = "textForwBack";
+p.append(document.customData.forwBackText);
+document.body.append(p);
+const controlText = document.getElementById("controlText");
+
+const textstream = animate(
+  [
+    {
+      node: document.customData.forwBackText,
+      type: "data",
+      update: data => (document.customData.forwBackText.textContent = Math.round(data.value))
+    }
+  ],
+  [
+    ["forward", () => ({ duration: 2, easing: "linear" }), [1, () => ({ value: 1000 })]],
+    ["back", () => ({ duration: 2, easing: "linear" }), [1, () => ({ value: 0 })]]
+  ]
+);
+
+const textconnector = textstream.on(({ action }) => {
+  console.log(action, "complete");
+});
+
+controlText.addEventListener("mouseover", () => {
+  textconnector({ data: [{}, { action: "forward" }] });
+});
+controlText.addEventListener("mouseout", () => {
+  textconnector({ data: [{}, { action: "back" }] });
+});

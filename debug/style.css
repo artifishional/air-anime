@@ -130,3 +130,22 @@ p {
   background-color: rgb(100, 100, 100);
   opacity: 0;
 }
+
+#textForwBack {
+  position: absolute;
+  left: 950px;
+  top: 650px;
+  font-family: Roobert, "Helvetica Neue", Helvetica;
+  font-size: 32px;
+  font-weight: bold;
+  color: rgb(132, 83, 227);
+}
+
+#controlText {
+  position: absolute;
+  left: 950px;
+  top: 700px;
+  width: 50px;
+  height: 50px;
+  background-color: rgb(0, 214, 114);
+}
