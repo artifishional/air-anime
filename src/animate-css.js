@@ -15,15 +15,20 @@ export default (view, frames, key) => {
     }
 
     const dom = view.map(e => e.node);
+    let animation = null;
 
     sweep.add(() => {
       dom.forEach(e => {
-        debugger;
-        // followers.get(e).value--;
-        // if (followers.get(e).value === 0) {
-        //   followers.delete(e);
-        //   anime.remove(e);
-        // }
+        const value = followers.get(e);
+        if (value) {
+          const index = value.findIndex(({ anim }) => anim === animation);
+          animation.pause();
+          value.splice(index, 1);
+          if (!value.length) {
+            followers.delete(e);
+            anime.remove(e);
+          }
+        }
       });
     });
 
@@ -126,19 +131,17 @@ export default (view, frames, key) => {
         animParams.push(key);
       });
 
-      const animation = anime(animeObj);
+      animation = anime(animeObj);
 
       dom.forEach(e => {
         if (!followers.has(e)) {
           followers.set(e, [{ anim: animation, params: animParams }]);
         } else {
-          [...followers].forEach(([, anims]) => {
-            anims.forEach(({ anim, params }, i) => {
-              if (params.matchesCount(animParams)) {
-                anim.pause();
-                followers.get(e).splice(i, 1, { anim: animation, params: animParams });
-              }
-            });
+          followers.get(e).forEach(({ anim, params }, i) => {
+            if (params.matchesCount(animParams)) {
+              anim.pause();
+              followers.get(e).splice(i, 1, { anim: animation, params: animParams });
+            }
           });
         }
       });

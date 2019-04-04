@@ -191,17 +191,15 @@ const popupstream = animate(
     [
       "fade-in",
       () => ({ duration: 1.25, easing: "linear" }),
-      [0, () => ({ opacity: 0 })],
       [0.8, () => ({ opacity: 0 })],
       [1, () => ({ opacity: 1 })]
     ],
-    ["fade-out", () => ({ duration: 5.25, easing: "linear" }), [1, () => ({ opacity: 0 })]]
+    ["fade-out", () => ({ duration: 0.25, easing: "linear" }), [1, () => ({ opacity: 0 })]]
   ]
 );
 
 const popupconnector = popupstream.on(({ action }) => {
   console.log(action, "complete");
-  popupconnector();
 });
 
 hoverable.addEventListener("mouseover", () => {
