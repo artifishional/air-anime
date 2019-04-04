@@ -2,27 +2,30 @@ import { stream } from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
-let currentAnimation = null;
-
 export default (view, frames, key) => {
   return stream((emt, { sweep, hook }) => {
     if (!view.map(({ type }) => type).every(e => e === "data")) {
       throw "Error: expected all nodes to have type `data`";
     }
 
-    const dom = view.map(({ node }) => node);
+    let animation = null;
 
     const state = {};
     function updateAll(data) {
       view.map(v => v.update(data));
     }
 
-    sweep.add(() => anime.remove(dom));
+    function animationClear() {
+      if (animation) {
+        animation.pause();
+        animation = null;
+      }
+    }
+
+    sweep.add(() => animationClear);
 
     hook.add(({ data: [data, { action = "default" }] } = {}) => {
-      if (currentAnimation) {
-        currentAnimation.pause();
-      }
+      animationClear();
 
       const keyframe = frames.find(([name]) => name === action);
 
@@ -110,8 +113,7 @@ export default (view, frames, key) => {
         animeObj[key] = value;
       });
 
-      const animation = anime(animeObj);
-      currentAnimation = animation;
+      animation = anime(animeObj);
       if (start === 0) {
         animation.play();
       } else {
