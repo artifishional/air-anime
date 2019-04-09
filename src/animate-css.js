@@ -115,7 +115,7 @@ export default (view, frames, key) => {
           arr.push({
             value,
             duration: offset
-              ? offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)
+              ? +(offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)).toFixed(3)
               : undefined
           });
         });
