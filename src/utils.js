@@ -49,13 +49,12 @@ export default {
     let last = -1;
     for (let i = 0; i < kf.length; i++) {
       let { offset } = kf[i];
-      if (offset === undefined && last === 1) {
-        offset = 0;
-      }
-      if (offset < 0 || offset > 1 || offset <= last) {
+      if (offset < 0 || offset > 1 || offset <= last || last === 1) {
         return false;
       }
-      last = offset;
+      if (offset) {
+        last = offset;
+      }
     }
     return true;
   }
