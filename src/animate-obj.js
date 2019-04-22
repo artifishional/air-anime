@@ -2,7 +2,7 @@ import { stream } from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
-export default (view, frames, key) => {
+export default (view, frames, layer) => {
   return stream((emt, { sweep, hook }) => {
     if (!view.map(({ type }) => type).every(e => e === "data")) {
       throw "Error: expected all nodes to have type `data`";

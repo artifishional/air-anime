@@ -3,7 +3,7 @@ import animateObj from "./animate-obj";
 
 export default (view, ...other) => {
   if (view.length === 0) {
-    return animateCss(view);
+    return animateCss(view, ...other);
   }
 
   const { type } = view[0];
