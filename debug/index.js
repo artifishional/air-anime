@@ -1,4 +1,5 @@
 import animate from "../src/index";
+import { Howl } from "Howler";
 
 const stream1 = animate(
   [{ node: document.querySelector("div#first.trololo-class-name"), type: "active" }],
@@ -197,6 +198,45 @@ const popupstream = animate(
     ["fade-out", () => ({ duration: 0.25, easing: "linear" }), [1, () => ({ opacity: 0 })]]
   ]
 );
+
+let resources = [];
+function loadSound (url) {
+    return new Promise(resolve => {
+        const sound = new Howl({
+            src: [`${url}.mp3`, `${url}.ogg`],
+            onload: () => {
+                resources.push({ url, type: 'sound', sound });
+                resolve();
+            }
+        });
+
+    });
+}
+
+Promise.all([loadSound('./example'), loadSound('./time')]).then(() => {
+    const soundstream = animate([{ node: popup, type: 'sound', resources }],
+        [
+            ['playsound', () => ({ duration: 1 }),
+                [0.2, () => ({ sound: './time' })],
+                [0.7, () => ({ sound: './time' })],
+            ],
+            ['immediate', () => ({ duration: -1, sound: './example' })]
+        ]
+    );
+
+    const soundconnector = soundstream.on(({ action }) => {
+        console.log(action);
+    });
+
+    const soundBlock = document.getElementById("sound");
+    soundBlock.addEventListener("mouseover", () => {
+        soundconnector({ data: [{}, { action: "playsound" }] });
+        soundconnector({ data: [{}, { action: "immediate" }] });
+    });
+    soundBlock.addEventListener("mouseover", () => {
+        soundconnector({ data: [{}, { action: "immediate" }] });
+    });
+});
 
 const popupconnector = popupstream.on(({ action }) => {
   console.log(action, "complete");

@@ -131,6 +131,19 @@ p {
   opacity: 0;
 }
 
+
+#sound {
+  left: 890px;
+  top: 50px;
+  width: 120px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  background-color: rgb(100, 100, 100);
+}
+
 #textForwBack {
   position: absolute;
   left: 950px;
