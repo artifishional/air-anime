@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "air-stream": "^0.6.0",
-    "animejs": "^3.0.1"
+    "animejs": "^3.0.1",
+    "howler": "^2.1.2"
   }
 }

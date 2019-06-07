@@ -8,7 +8,6 @@ export default (view, frames, layer) => {
         }
 
         const resources = view.flatMap(({ resources }) => resources).filter(({ type }) => type === 'sound');
-
         let timers = [];
         let sounds = [];
 
@@ -19,14 +18,10 @@ export default (view, frames, layer) => {
         }
 
         function animationClear () {
-            // resources.forEach(({ sound }) => {
-            //     sound.stop();
-            // });
-
-            sounds.forEach((sound, i) => {
+            sounds.forEach(({ sound, id }, i) => {
                 if (sound) {
-                    sound.sound.stop(sound.id)
-                    sounds[i] = null
+                    sound.stop(id);
+                    sounds[i].sound = null
                 }
             });
 
@@ -63,7 +58,6 @@ export default (view, frames, layer) => {
 
             if (prop.duration === -1) {
                 resources.filter(({ url }) => prop.sound === url).forEach(({ sound }) => {
-                    // sound.stop();
                     sound.play();
                     emt({ action: `${action}-complete` });
                 });
@@ -112,9 +106,8 @@ export default (view, frames, layer) => {
                     value.forEach(({ value: soundUrl, duration }) => {
                         resources.filter(({ url }) => soundUrl === url).forEach(({ sound }) => {
                             const timer = setTimeout(() => {
-                                // sound.stop();
-                                let soundId = sound.play();
-                                sounds.push({ soundId, sound });
+                                const id = sound.play();
+                                sounds.push({ id, sound });
                                 sound.on('end', () => {
                                     clearTimeout(timer);
                                 });
