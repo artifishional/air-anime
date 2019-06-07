@@ -205,7 +205,7 @@ function loadSound (url) {
         const sound = new Howl({
             src: [`${url}.mp3`, `${url}.ogg`],
             onload: () => {
-                resources.push({ url, type: 'sound', sound });
+                resources.push({ name: url, type: 'sound', sound });
                 resolve();
             }
         });
@@ -214,7 +214,9 @@ function loadSound (url) {
 }
 
 Promise.all([loadSound('./example'), loadSound('./time')]).then(() => {
-    const soundstream = animate([{ node: popup, type: 'sound', resources }],
+    const soundBlock = document.getElementById("sound");
+
+    const soundstream = animate([{ node: soundBlock, type: 'sound', resources }],
         [
             ['playsound', () => ({ duration: 1 }),
                 [0.2, () => ({ sound: './time' })],
@@ -228,7 +230,6 @@ Promise.all([loadSound('./example'), loadSound('./time')]).then(() => {
         console.log(action);
     });
 
-    const soundBlock = document.getElementById("sound");
     soundBlock.addEventListener("mouseover", () => {
         soundconnector({ data: [{}, { action: "playsound" }] });
         soundconnector({ data: [{}, { action: "immediate" }] });

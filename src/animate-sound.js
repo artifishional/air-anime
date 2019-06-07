@@ -57,7 +57,7 @@ export default (view, frames, layer) => {
             const start = prop.start * 1000 || 0;
 
             if (prop.duration === -1) {
-                resources.filter(({ url }) => prop.sound === url).forEach(({ sound }) => {
+                resources.filter(({ name }) => prop.sound === name).forEach(({ sound }) => {
                     sound.play();
                     emt({ action: `${action}-complete` });
                 });
@@ -103,8 +103,8 @@ export default (view, frames, layer) => {
                 });
 
                 [...keyframes].filter(([key, value]) => key === 'sound').forEach(([, value]) => {
-                    value.forEach(({ value: soundUrl, duration }) => {
-                        resources.filter(({ url }) => soundUrl === url).forEach(({ sound }) => {
+                    value.forEach(({ value: url, duration }) => {
+                        resources.filter(({ name }) => url === name).forEach(({ sound }) => {
                             const timer = setTimeout(() => {
                                 const id = sound.play();
                                 sounds.push({ id, sound });
