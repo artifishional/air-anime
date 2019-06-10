@@ -60,6 +60,10 @@ connector();
   { node: text, type: "data", update: data => text.textContent = data.value }
 ```
 
+```javascript
+  { node: "div#block", type: "sound", resources: [Howl, ...] }
+```
+
 #### Supported targets
 
 - _CSS selector_: `".item"`
