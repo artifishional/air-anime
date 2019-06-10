@@ -14,7 +14,7 @@ export default (view, ...other) => {
   } else if (type === "data") {
     return animateObj(view, ...other);
   } else if (type === "sound") {
-    return animateSound(view, ...other);
+    return animateSound(view.filter(({type}) => type === 'sound'), ...other);
   } else {
     throw `Error: invalid animation type '${type}'`;
   }

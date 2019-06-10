@@ -3,11 +3,8 @@ import utils from './utils';
 
 export default (view, frames, layer) => {
     return stream((emt, { sweep, hook }) => {
-        if (!view.map(({ type }) => type).every(e => e === 'sound')) {
-            throw 'Error: expected all nodes to have type `sound`';
-        }
+        const resources = view.flatMap(({ resources }) => resources).filter(({ type }) => type === 'sound').filter((v, i, a) => a.indexOf(v) === i);
 
-        const resources = view.flatMap(({ resources }) => resources).filter(({ type }) => type === 'sound');
         let timers = [];
         let sounds = [];
 
