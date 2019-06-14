@@ -38,12 +38,17 @@ export default (view, frames, layer) => {
                 return;
             }
 
-            const prop = keyframe[1](data);
+            const prop = keyframe[1] ? keyframe[1](data) : {};
 
             const keys = keyframe.slice(2).map(([offset, prop]) => ({
                 offset,
                 ...prop(data)
             }));
+
+            const soundNames = keys.map(key => key.sound).filter(Boolean)
+            if (!soundNames.length) {
+                return;
+            }
 
             if (!utils.checkOffsetValidity(keys)) {
                 throw 'Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.';
@@ -53,8 +58,8 @@ export default (view, frames, layer) => {
             const duration = prop.duration * 1000 || 0;
             const start = prop.start * 1000 || 0;
 
-            if (prop.duration === -1) {
-                resources.filter(({ name }) => prop.sound === name).forEach(({ sound }) => {
+            if (!duration) {
+                resources.filter(({ name }) => soundNames.indexOf(name) > -1).forEach(({ sound }) => {
                     sound.play();
                     emt({ action: `${action}-complete` });
                 });
