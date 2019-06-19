@@ -1,38 +1,21 @@
 import animateCss from "./animate-css";
 import animateObj from "./animate-obj";
 import animateSound from "./animate-sound";
-import { combine } from 'air-stream';
 
 export default (view, ...other) => {
   if (view.length === 0) {
     return animateCss(view, ...other);
   }
 
-  const animates = [];
-  const types = ['active', 'data', 'sound'];
+  const { type } = view[0];
 
-  types.forEach(animateType => {
-    const views = view.filter(({type}) => type === animateType);
-    if (views.length) {
-      switch (animateType) {
-        case 'active':
-          animates.push(animateCss(views, ...other));
-          break;
-        case 'data':
-          animates.push(animateObj(views, ...other));
-          break;
-        case 'sound':
-          animates.push(animateSound(views, ...other));
-          break;
-      }
-
-    }
-  });
-
-  if (!animates.length) {
-    throw `Error: invalid animation types`;
+  if (type === "active") {
+    return animateCss(view, ...other);
+  } else if (type === "data") {
+    return animateObj(view, ...other);
+  } else if (type === "sound") {
+    return animateSound(view.filter(({type}) => type === 'sound'), ...other);
   } else {
-    return combine(animates);
+    throw `Error: invalid animation type '${type}'`;
   }
-
 };
