@@ -54,7 +54,7 @@ export default (view, frames, layer) => {
 
       const keyframes = new Map();
 
-      const { easing = "easeOutElastic(1, .5)" } = prop;
+      const { easing = "easeOutCubic" } = prop;
       const duration = prop.duration * 1000 || 0;
       const start = prop.start * 1000 || 0;
 

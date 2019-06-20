@@ -77,7 +77,7 @@ connector();
 instance of Object
 
 - _duration_: full animation duration time (in sec). 0 default (means animation will not be played, last frame applied immediatly)
-- _easing_: easing timing (see this page: https://animejs.com/documentation/#linearEasing for more details). "easeOutElastic(1, .5)" default.
+- _easing_: easing timing (see this page: https://animejs.com/documentation/#linearEasing for more details). "easeOutCubic" default.
 - _start_: time to start animation from (in sec). 0 default. Cannot be greater or equal animation duration.
 
 ### Keys properties
