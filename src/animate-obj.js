@@ -52,10 +52,6 @@ export default (view, frames, layer) => {
       const duration = prop.duration * 1000 || 0;
       const start = prop.start * 1000 || 0;
 
-      if (start >= duration && duration !== 0) {
-        throw "Error: animation start time cannot be greater or equal than animation duration.";
-      }
-
       if (keys[0].offset === 0) {
         const { offset, ...vars } = keys[0];
         Object.entries(vars).forEach(([key]) => {
@@ -117,8 +113,12 @@ export default (view, frames, layer) => {
       if (start === 0) {
         animation.play();
       } else {
-        animation.seek(start);
-        animation.play();
+        if (start >= duration && duration !== 0) {
+          animation.seek(duration);
+        } else {
+          animation.seek(start);
+          animation.play();
+        }
       }
     });
   });
