@@ -34,128 +34,136 @@ export default (view, frames, layer) => {
         return;
       }
 
-      const keyframe = frames.find(([name]) => name === action);
 
-      if (!keyframe) {
+      const keyframes = frames.filter(([name]) => name === action);
+
+      if (!keyframes) {
         emt({ action: `${action}-complete` });
         return;
       }
 
-      const prop = keyframe[1] ? keyframe[1](data) : {};
+      const promises = keyframes.map((keyframe) => new Promise((resolve) => {
 
-      const keys = keyframe.slice(2).map(([offset, prop]) => ({
-        offset,
-        ...prop(data)
-      }));
+        const prop = keyframe[1] ? keyframe[1](data) : {};
 
-      if (!utils.checkOffsetValidity(keys)) {
-        throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
-      }
+        const keys = keyframe.slice(2).map(([offset, prop]) => ({
+          offset,
+          ...prop(data)
+        }));
 
-      const keyframes = new Map();
+        if (!utils.checkOffsetValidity(keys)) {
+          throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        }
 
-      const { easing = "easeOutCubic" } = prop;
-      const duration = prop.duration * 1000 || 0;
-      const start = prop.start * 1000 || 0;
+        const keyframes = new Map();
 
-      const animeObj = {
-        targets: dom,
-        easing,
-        duration,
-        complete: () => {
-          emt({ action: `${action}-complete` });
-          if (duration === 0) {
-            dom.forEach(elem => {
-              classWatch.forEach(({ classList }) => {
-                classList.forEach(([className, value]) => {
-                  elem.classList.toggle(className, value);
-                });
-              });
-            });
-          }
-        },
-        update: anim => {
-          if (classWatch.length > 0) {
-            const { offset, classList } = classWatch[0];
-            const { progress } = anim;
-            if (progress / 100 >= offset) {
+        const { easing = "easeOutCubic" } = prop;
+        const duration = prop.duration * 1000 || 0;
+        const start = prop.start * 1000 || 0;
+
+        const animeObj = {
+          targets: dom,
+          easing,
+          duration,
+          complete: () => {
+            resolve();
+            if (duration === 0) {
               dom.forEach(elem => {
-                classList.forEach(([className, value]) => {
-                  elem.classList.toggle(className, value);
+                classWatch.forEach(({ classList }) => {
+                  classList.forEach(([className, value]) => {
+                    elem.classList.toggle(className, value);
+                  });
                 });
               });
-              classWatch.shift();
             }
-          }
-        },
-        autoplay: false
-      };
+          },
+          update: anim => {
+            if (classWatch.length > 0) {
+              const { offset, classList } = classWatch[0];
+              const { progress } = anim;
+              if (progress / 100 >= offset) {
+                dom.forEach(elem => {
+                  classList.forEach(([className, value]) => {
+                    elem.classList.toggle(className, value);
+                  });
+                });
+                classWatch.shift();
+              }
+            }
+          },
+          autoplay: false
+        };
 
-      if (keys[0].offset === 0) {
-        const { offset, classList, ...rest } = keys.splice(0, 1)[0];
-        anime.set(dom, rest);
-      }
+        if (keys[0].offset === 0) {
+          const { offset, classList, ...rest } = keys.splice(0, 1)[0];
+          anime.set(dom, rest);
+        }
 
-      utils.restoreOffset(keys);
-      const classWatch = keys
-        .filter(key => key.classList)
-        .map(({ offset, classList }) => ({ offset, classList: Object.entries(classList) }));
+        utils.restoreOffset(keys);
+        const classWatch = keys
+          .filter(key => key.classList)
+          .map(({ offset, classList }) => ({ offset, classList: Object.entries(classList) }));
 
-      keys.forEach(key => {
-        const { offset, classList, ...vars } = key;
-        Object.entries(vars).forEach(([key, value]) => {
-          if (!keyframes.has(key)) {
-            keyframes.set(key, []);
-          }
-          const arr = keyframes.get(key);
-          arr.push({
-            value,
-            duration: offset
-              ? offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)
-              : undefined
+        keys.forEach(key => {
+          const { offset, classList, ...vars } = key;
+          Object.entries(vars).forEach(([key, value]) => {
+            if (!keyframes.has(key)) {
+              keyframes.set(key, []);
+            }
+            const arr = keyframes.get(key);
+            arr.push({
+              value,
+              duration: offset
+                ? offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)
+                : undefined
+            });
           });
         });
-      });
 
-      const animParams = [];
-      [...keyframes].forEach(([key, value]) => {
-        animeObj[key] = value;
-        animParams.push(key);
-      });
+        const animParams = [];
+        [...keyframes].forEach(([key, value]) => {
+          animeObj[key] = value;
+          animParams.push(key);
+        });
 
-      animation = anime(animeObj);
+        animation = anime(animeObj);
 
-      function matchesCount(a, b) {
-        return a.filter(e => b.includes(e)).length;
-      }
-
-      dom.forEach(e => {
-        !followers.has(e) && followers.set(e, []);
-
-        followers.set(
-          e,
-          followers.get(e).filter(({ anim, params }) => {
-            if (matchesCount(params, animParams)) {
-              anim.pause();
-              return false;
-            }
-            return true;
-          })
-        );
-
-        followers.get(e).push({ anim: animation, params: animParams });
-      });
-
-      if (start === 0) {
-        animation.play();
-      } else {
-        if (start >= duration && duration !== 0) {
-          animation.seek(duration);
-        } else {
-          animation.seek(start);
-          animation.play();
+        function matchesCount (a, b) {
+          return a.filter(e => b.includes(e)).length;
         }
-      }
+
+        dom.forEach(e => {
+          !followers.has(e) && followers.set(e, []);
+
+          followers.set(
+            e,
+            followers.get(e).filter(({ anim, params }) => {
+              if (matchesCount(params, animParams)) {
+                anim.pause();
+                return false;
+              }
+              return true;
+            })
+          );
+
+          followers.get(e).push({ anim: animation, params: animParams });
+        });
+
+        if (start === 0) {
+          animation.play();
+        } else {
+          if (start >= duration && duration !== 0) {
+            animation.seek(duration);
+          } else {
+            animation.seek(start);
+            animation.play();
+          }
+        }
+      }));
+
+      Promise.all(promises).then(() => {
+        emt({ action: `${action}-complete` });
+      })
     });
   });
 };
