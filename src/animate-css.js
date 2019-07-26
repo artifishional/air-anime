@@ -59,8 +59,8 @@ export default (view, frames, layer) => {
               ...acc2,
               [key]: acc1[key] ? [
                 ...acc1[key],
-                value
-              ] : [value]
+                {value, offset}
+              ] : [{value, offset}]
             }
           }, {});
         }, {});
@@ -73,7 +73,32 @@ export default (view, frames, layer) => {
         }
       });
 
-      console.warn(dom, test);
+      const animations = test
+          .filter(({type}) => type === 'animation')
+          .reduce((acc, animation) => {
+            const {props, delay, duration, easing} = animation;
+            const result = Object.entries(props).map(([key, value]) => {
+              const durationsArr = value.map(({offset}) => offset && duration && offset * duration || 0);
+              return {
+                [key]: value.map((v, i) => {
+                  return {
+                    value: v.value,
+                    duration: i === 0 ? 0 : (durationsArr[i] - durationsArr[ i - 1]) * 1000,
+                    delay: i === 0 ? delay * 1000 : 0,
+                    easing
+                  }
+                })
+              }
+            });
+            return [
+              ...acc,
+              ...result
+            ]
+          }, []);
+
+      const statics = test.filter(({type}) => type === 'static');
+
+      console.warn(dom, animations, statics);
 
       // хочу так все переделать
 
