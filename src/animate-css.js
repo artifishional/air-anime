@@ -36,66 +36,43 @@ export default (view, frames, layer) => {
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
-      console.warn(dom);
-
       const classLists = [];
 
-      const keyframes = allKeyframes.map((keyframe) => {
+      const keyframes = allKeyframes.reduce((anim, keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
         const {easing, delay, duration} = keyframeProps;
-        const props = keyframe.slice(2).reduce((acc1, [offset, func]) => {
-          const rrr = Object.entries(func(data)).reduce((acc2, [key, value]) => {
-            if (key === 'classList') {
-              classLists.push({offset: offset || 0, classList: value && Object.entries(value)})
-              return {
-                ...acc2
-              }
-            }
-            return {
-              ...acc2,
-              [key]: acc1[key] ? [
-                ...acc1[key],
-                {value, offset}
-              ] : [{value, offset}]
-            };
-          }, {});
-          return {
-            ...acc1,
-            ...rrr
+        const props = keyframe.slice(2).reduce((acc, [offset, func]) => {
+          const {classList, ...rest} = func(data);
+          if (classList) {
+            classLists.push({offset: offset || 0, classList: Object.entries(classList)});
           }
-        }, {});
-        return {
-          type: 'animation',
-          props,
-          delay,
-          duration,
-          easing
-        }
-      });
+          return !Object.keys(rest).length ? [...acc] : [
+            ...acc,
+            ...Object.entries(rest).map(([key, value]) => ({value, offset, name: key}))
+          ]
+        }, []);
+        return !props.length ? [...anim] : [
+          ...anim,
+          {
+            props,
+            delay,
+            duration,
+            easing
+          }
+        ]
+      }, []);
 
-      const animations = keyframes
-          .filter(({type}) => type === 'animation')
-          .reduce((acc, animation) => {
-            const {props, delay, duration, easing} = animation;
-            const result = Object.entries(props).reduce((a, [key, value]) => {
-              const durationsArr = value.map(({offset}) => offset && duration && offset * duration || 0);
-              return {
-                ...a,
-                [key]: value.map((v, i) => {
-                  return {
-                    value: v.value,
-                    duration: i === 0 ? 0 : (durationsArr[i] - durationsArr[i - 1]) * 1000,
-                    delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-                    easing
-                  }
-                })
-              }
-            }, {});
-            return {
-              ...acc,
-              ...result
-            }
-          }, {});
+      if (!keyframes.length) {
+        emt({action: `${action}-complete`});
+        dom.forEach(elem => {
+          classLists.forEach(({classList}) => {
+            classList.forEach(([className, value]) => {
+              elem.classList.toggle(className, value);
+            })
+          });
+        });
+        return;
+      }
 
       if (!allKeyframes.length) {
         emt({action: `${action}-complete`});
@@ -125,7 +102,7 @@ export default (view, frames, layer) => {
 
       const animeObj = {
         targets: dom,
-        ...animations,
+        // ...animations,
         easing: "easeOutCubic",
         complete: () => {
           emt({action: `${action}-complete`});
@@ -153,6 +130,33 @@ export default (view, frames, layer) => {
         },
         autoplay: false
       };
+
+      const animations = new Map();
+
+      keyframes.forEach((anim) => {
+        const {props, delay, duration, easing} = anim;
+        const durations = props.map(({offset}) => offset && duration && offset * duration || 0);
+        props.forEach((prop, i) => {
+          const {name, value, offset} = prop;
+          if (!animations.has(name)) {
+            animations.set(name, []);
+          }
+          const arr = animations.get(name);
+          const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+          arr.push({
+            value,
+            duration,
+            delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+            easing
+          });
+        })
+      });
+
+      [...animations].forEach(([key, value]) => {
+        animeObj[key] = value;
+      });
+
+      console.warn(dom, animeObj)
 
       animation = anime(animeObj);
 
