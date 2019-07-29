@@ -97,12 +97,38 @@ export default (view, frames, layer) => {
         throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
       }
 
+      const animations = new Map();
+
+      keyframes.forEach((anim) => {
+        const {props, delay, duration, easing} = anim;
+        const durations = props.map(({offset}) => offset && duration && offset * duration || 0);
+        props.forEach((prop, i) => {
+          const {name, value} = prop;
+          if (!animations.has(name)) {
+            animations.set(name, []);
+          }
+          const arr = animations.get(name);
+          const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+          arr.push({
+            value,
+            duration,
+            delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+            easing
+          });
+        })
+      });
+
       const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
       const start = 0;
 
       const animeObj = {
         targets: dom,
-        // ...animations,
+        ...[...animations].reduce((acc, [key, value]) => {
+          return {
+            ...acc,
+            [key]: value
+          }
+        }, {}),
         easing: "easeOutCubic",
         complete: () => {
           emt({action: `${action}-complete`});
@@ -130,33 +156,6 @@ export default (view, frames, layer) => {
         },
         autoplay: false
       };
-
-      const animations = new Map();
-
-      keyframes.forEach((anim) => {
-        const {props, delay, duration, easing} = anim;
-        const durations = props.map(({offset}) => offset && duration && offset * duration || 0);
-        props.forEach((prop, i) => {
-          const {name, value, offset} = prop;
-          if (!animations.has(name)) {
-            animations.set(name, []);
-          }
-          const arr = animations.get(name);
-          const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
-          arr.push({
-            value,
-            duration,
-            delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-            easing
-          });
-        })
-      });
-
-      [...animations].forEach(([key, value]) => {
-        animeObj[key] = value;
-      });
-
-      console.warn(dom, animeObj)
 
       animation = anime(animeObj);
 
