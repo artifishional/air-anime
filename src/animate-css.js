@@ -36,42 +36,42 @@ export default (view, frames, layer) => {
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
-      const test = allKeyframes.map((keyframe) => {
+      const classLists = [];
+
+      const keyframes = allKeyframes.map((keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
         const {easing, delay, duration} = keyframeProps;
-        if (delay || duration) {
-          const props = keyframe.slice(2).reduce((acc1, [offset, func]) => {
-            return Object.entries(func(data)).reduce((acc2, [key, value]) => {
+        const props = keyframe.slice(2).reduce((acc1, [offset, func]) => {
+          const rrr = Object.entries(func(data)).reduce((acc2, [key, value]) => {
+            if (key === 'classList') {
+              classLists.push({offset: offset || 0, classList: value && Object.entries(value)})
               return {
-                ...acc2,
-                [key]: acc1[key] ? [
-                  ...acc1[key],
-                  {value, offset}
-                ] : [{value, offset}]
+                ...acc2
               }
-            }, {});
+            }
+            return {
+              ...acc2,
+              [key]: acc1[key] ? [
+                ...acc1[key],
+                {value, offset}
+              ] : [{value, offset}]
+            };
           }, {});
           return {
-            type: 'animation',
-            props,
-            delay,
-            duration,
-            easing
+            ...acc1,
+            ...rrr
           }
-        }
-        const props = keyframe.slice(2).map(([offset, func]) => {
-          return {
-            offset,
-            ...func(data)
-          }
-        });
+        }, {});
         return {
-          type: 'static',
-          props
+          type: 'animation',
+          props,
+          delay,
+          duration,
+          easing
         }
       });
 
-      const animations = test
+      const animations = keyframes
           .filter(({type}) => type === 'animation')
           .reduce((acc, animation) => {
             const {props, delay, duration, easing} = animation;
@@ -95,28 +95,12 @@ export default (view, frames, layer) => {
             }
           }, {});
 
-      const classLists = [];
-      const styles = [];
-
-      test.filter(({type}) => type === 'static').forEach(({props}) => {
-        props.forEach((prop) => {
-          const {offset, classList, ...rest} = prop;
-          if (classList) {
-            classLists.push({offset: offset || 0, classList: Object.entries(classList)})
-          } else {
-            styles.push({offset: offset || 0, ...rest})
-          }
-        })
-      });
-
-      console.warn(dom, animations, classLists, styles);
-
       if (!allKeyframes.length) {
         emt({action: `${action}-complete`});
         return;
       }
 
-      const testProps = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
+      const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
 
       const keys = allKeyframes.reduce((acc, keyframe) => {
         return [
@@ -134,9 +118,7 @@ export default (view, frames, layer) => {
         throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
       }
 
-      const keyframes = new Map();
-
-      const duration = Math.max(...testProps.map(({duration}) => duration || 0)) * 1000;
+      const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
       const start = 0;
 
       const animeObj = {
@@ -152,11 +134,6 @@ export default (view, frames, layer) => {
                   elem.classList.toggle(className, value);
                 })
               });
-              styles.forEach(({offset, ...rest}) => {
-                Object.entries(rest).forEach(([key, value]) => {
-                  elem.style[key] = value;
-                })
-              });
             })
           }
         },
@@ -167,13 +144,6 @@ export default (view, frames, layer) => {
               if (progress / 100 >= offset) {
                 classList.forEach(([className, value]) => {
                   elem.classList.toggle(className, value);
-                })
-              }
-            });
-            styles.forEach(({offset, ...rest}) => {
-              if (progress / 100 >= offset) {
-                Object.entries(rest).forEach(([key, value]) => {
-                  elem.style[key] = value;
                 })
               }
             });
