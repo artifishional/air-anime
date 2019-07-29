@@ -36,6 +36,8 @@ export default (view, frames, layer) => {
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
+      console.warn(dom);
+
       const classLists = [];
 
       const keyframes = allKeyframes.map((keyframe) => {
