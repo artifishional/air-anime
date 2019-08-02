@@ -50,8 +50,11 @@ export default (view, frames, layer) => {
         const {easing, delay, duration} = keyframeProps;
 
         const offsets = keyframe.slice(2).map(([offset]) => offset);
+        if (offsets && !utils.checkOffsetsValidity(offsets)) {
+          throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        }
+
         const durations = keyframe.slice(2).map(([offset]) => offset && duration && offset * duration || 0);
-        // тут можно их проверить и тут можно их добавить
 
         keyframe.slice(2).forEach(([offset, func], i) => {
           const {classList, ...rest} = func(data);
@@ -89,22 +92,6 @@ export default (view, frames, layer) => {
       }
 
       const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
-
-      const keys = allKeyframes.reduce((acc, keyframe) => {
-        return [
-          ...acc,
-          ...keyframe.slice(2).map(([offset, prop]) => {
-            return {
-              offset,
-              ...prop(data)
-            }
-          })
-        ]
-      }, []);
-
-      if (!keys.every((key) => utils.checkOffsetValidity(key))) {
-        throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
-      }
 
       const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
       const start = 0;
