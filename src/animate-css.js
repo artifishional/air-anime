@@ -43,7 +43,7 @@ export default (view, frames, layer) => {
 
       const classLists = [];
       const animParams = [];
-      const rrr = new Map();
+      const animations = new Map();
 
       allKeyframes.forEach((keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
@@ -59,11 +59,11 @@ export default (view, frames, layer) => {
             classLists.push({offset: offset || 0, classList: Object.entries(classList)});
           } else if (Object.keys(rest).length) {
             Object.entries(rest).forEach(([key, value]) => {
-              if (!rrr.has(key)) {
-                rrr.set(key, []);
+              if (!animations.has(key)) {
+                animations.set(key, []);
                 animParams.push(key);
               }
-              const arr = rrr.get(key);
+              const arr = animations.get(key);
               const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
               arr.push({
                 value,
@@ -76,7 +76,7 @@ export default (view, frames, layer) => {
         })
       });
 
-      if (![...rrr].length) {
+      if (![...animations].length) {
         emt({action: `${action}-complete`});
         dom.forEach(elem => {
           classLists.forEach(({classList}) => {
@@ -111,7 +111,7 @@ export default (view, frames, layer) => {
 
       const animeObj = {
         targets: dom,
-        ...[...rrr].reduce((acc, [key, value]) => {
+        ...[...animations].reduce((acc, [key, value]) => {
           return {
             ...acc,
             [key]: value
