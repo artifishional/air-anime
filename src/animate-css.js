@@ -42,6 +42,7 @@ export default (view, frames, layer) => {
       }
 
       const classLists = [];
+      const animParams = [];
       const rrr = new Map();
 
       allKeyframes.forEach((keyframe) => {
@@ -60,6 +61,7 @@ export default (view, frames, layer) => {
             Object.entries(rest).forEach(([key, value]) => {
               if (!rrr.has(key)) {
                 rrr.set(key, []);
+                animParams.push(key);
               }
               const arr = rrr.get(key);
               const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
@@ -149,22 +151,22 @@ export default (view, frames, layer) => {
         return a.filter(e => b.includes(e)).length;
       }
 
-      // dom.forEach(e => {
-      //   !followers.has(e) && followers.set(e, []);
-      //
-      //   followers.set(
-      //       e,
-      //       followers.get(e).filter(({ anim, params }) => {
-      //         if (matchesCount(params, animParams)) {
-      //           anim.pause();
-      //           return false;
-      //         }
-      //         return true;
-      //       })
-      //   );
-      //
-      //   followers.get(e).push({ anim: animation, params: animParams });
-      // });
+      dom.forEach(e => {
+        !followers.has(e) && followers.set(e, []);
+
+        followers.set(
+            e,
+            followers.get(e).filter(({ anim, params }) => {
+              if (matchesCount(params, animParams)) {
+                anim.pause();
+                return false;
+              }
+              return true;
+            })
+        );
+
+        followers.get(e).push({ anim: animation, params: animParams });
+      });
 
       if (start === 0) {
         animation.play();
