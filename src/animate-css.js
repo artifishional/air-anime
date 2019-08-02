@@ -36,33 +36,45 @@ export default (view, frames, layer) => {
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
-      const classLists = [];
+      if (!allKeyframes.length) {
+        emt({action: `${action}-complete`});
+        return;
+      }
 
-      const keyframes = allKeyframes.reduce((anim, keyframe) => {
+      const classLists = [];
+      const rrr = new Map();
+
+      allKeyframes.forEach((keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
         const {easing, delay, duration} = keyframeProps;
-        const props = keyframe.slice(2).reduce((acc, [offset, func]) => {
+
+        const offsets = keyframe.slice(2).map(([offset]) => offset);
+        const durations = keyframe.slice(2).map(([offset]) => offset && duration && offset * duration || 0);
+        // тут можно их проверить и тут можно их добавить
+
+        keyframe.slice(2).forEach(([offset, func], i) => {
           const {classList, ...rest} = func(data);
           if (classList) {
             classLists.push({offset: offset || 0, classList: Object.entries(classList)});
+          } else if (Object.keys(rest).length) {
+            Object.entries(rest).forEach(([key, value]) => {
+              if (!rrr.has(key)) {
+                rrr.set(key, []);
+              }
+              const arr = rrr.get(key);
+              const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+              arr.push({
+                value,
+                duration,
+                delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                easing
+              });
+            })
           }
-          return !Object.keys(rest).length ? [...acc] : [
-            ...acc,
-            ...Object.entries(rest).map(([key, value]) => ({value, offset, name: key}))
-          ]
-        }, []);
-        return !props.length ? [...anim] : [
-          ...anim,
-          {
-            props,
-            delay,
-            duration,
-            easing
-          }
-        ]
-      }, []);
+        })
+      });
 
-      if (!keyframes.length) {
+      if (![...rrr].length) {
         emt({action: `${action}-complete`});
         dom.forEach(elem => {
           classLists.forEach(({classList}) => {
@@ -71,11 +83,6 @@ export default (view, frames, layer) => {
             })
           });
         });
-        return;
-      }
-
-      if (!allKeyframes.length) {
-        emt({action: `${action}-complete`});
         return;
       }
 
@@ -97,33 +104,12 @@ export default (view, frames, layer) => {
         throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
       }
 
-      const animations = new Map();
-
-      keyframes.forEach((anim) => {
-        const {props, delay, duration, easing} = anim;
-        const durations = props.map(({offset}) => offset && duration && offset * duration || 0);
-        props.forEach((prop, i) => {
-          const {name, value} = prop;
-          if (!animations.has(name)) {
-            animations.set(name, []);
-          }
-          const arr = animations.get(name);
-          const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
-          arr.push({
-            value,
-            duration,
-            delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-            easing
-          });
-        })
-      });
-
       const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
       const start = 0;
 
       const animeObj = {
         targets: dom,
-        ...[...animations].reduce((acc, [key, value]) => {
+        ...[...rrr].reduce((acc, [key, value]) => {
           return {
             ...acc,
             [key]: value
