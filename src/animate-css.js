@@ -45,41 +45,63 @@ export default (view, frames, layer) => {
       const animParams = [];
       const animations = new Map();
 
+      const animationsWithStartProperty = new Map();
+
       allKeyframes.forEach((keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
-        const {easing, delay, duration} = keyframeProps;
+        const {easing, delay, duration, start} = keyframeProps;
 
-        const offsets = keyframe.slice(2).map(([offset]) => offset);
+        const offsets = keyframe.slice(2).map(([offset, func]) => {
+          const {offset: elemOffset} = func(data);
+          return elemOffset || offset;
+        });
+
         if (offsets && !utils.checkOffsetsValidity(offsets)) {
           throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
         }
 
-        const durations = keyframe.slice(2).map(([offset]) => offset && duration && offset * duration || 0);
+        const durations = offsets.map((offset) => offset && duration && offset * duration || 0);
 
         keyframe.slice(2).forEach(([offset, func], i) => {
-          const {classList, ...rest} = func(data);
+          const {classList, offset: elemOffset, ...rest} = func(data);
           if (classList) {
             classLists.push({offset: offset || 0, classList: Object.entries(classList)});
           } else if (Object.keys(rest).length) {
             Object.entries(rest).forEach(([key, value]) => {
-              if (!animations.has(key)) {
-                animations.set(key, []);
-                animParams.push(key);
+              if (start) {
+                if (!animationsWithStartProperty.has(key)) {
+                  animationsWithStartProperty.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = animationsWithStartProperty.get(key);
+                const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+                arr.push({
+                  value,
+                  duration,
+                  delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                  easing,
+                  start
+                });
+              } else {
+                if (!animations.has(key)) {
+                  animations.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = animations.get(key);
+                const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+                arr.push({
+                  value,
+                  duration,
+                  delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                  easing
+                });
               }
-              const arr = animations.get(key);
-              const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
-              arr.push({
-                value,
-                duration,
-                delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-                easing
-              });
             })
           }
         })
       });
 
-      if (![...animations].length) {
+      if (![...animations].length && ![...animationsWithStartProperty].length) {
         emt({action: `${action}-complete`});
         dom.forEach(elem => {
           classLists.forEach(({classList}) => {
@@ -131,6 +153,10 @@ export default (view, frames, layer) => {
         },
         autoplay: false
       };
+
+      if ([...animationsWithStartProperty].length) {
+
+      }
 
       animation = anime(animeObj);
 
