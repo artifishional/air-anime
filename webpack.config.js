@@ -1,7 +1,6 @@
 module.exports = {
   devtool: "(none)",
   mode: "development",
-  watch: true,
   entry: {
     debug: "./debug/index.js"
   },
