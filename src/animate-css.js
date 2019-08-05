@@ -76,7 +76,8 @@ export default (view, frames, layer) => {
                 value,
                 duration,
                 delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-                easing
+                easing,
+                start: start && start * 1000 || 0
               });
             })
           }
@@ -103,7 +104,7 @@ export default (view, frames, layer) => {
       const timeLine = anime.timeline({
         targets: dom,
         easing: 'easeOutCubic',
-        duration,
+        // duration,
         complete: () => {
           emt({action: `${action}-complete`});
           if (duration === 0) {
@@ -131,18 +132,71 @@ export default (view, frames, layer) => {
         autoplay: false
       });
 
-      timeLine.add({
-        ...[...animations].reduce((acc, [key, value]) => {
-          return {
-            ...acc,
-            [key]: value
-          }
-        }, {}),
-      }, 0)
+
+      [...animations].forEach(([key, value]) => {
+        const [{start}] = value;
+
+        // const animation = anime({
+        //     targets: dom,
+        //     [key]: [...value],
+        //     autoplay: false
+        // });
+        //
+        // animation.seek(start);
+        // console.warn(dom, animation);
+        timeLine.add({
+          targets: dom,
+          [key]: [...value]
+          // currentTime: start
+        }, -start);
+      });
+
+      console.warn(dom, timeLine)
+
+      // const animeObj = {
+      //     targets: dom,
+      //     easing: 'easeOutCubic',
+      //     duration,
+      //     ...[...animations].reduce((acc, [key, value]) => {
+      //       // const [{start}] = value;
+      //       return {
+      //         ...acc,
+      //         [key]: value
+      //       }
+      //     }, {}),
+      //     complete: () => {
+      //       emt({action: `${action}-complete`});
+      //       if (duration === 0) {
+      //         dom.forEach(elem => {
+      //           classLists.forEach(({classList}) => {
+      //             classList.forEach(([className, value]) => {
+      //               elem.classList.toggle(className, value);
+      //             })
+      //           });
+      //         })
+      //       }
+      //     },
+      //     update: anim => {
+      //       const {progress} = anim;
+      //       dom.forEach(elem => {
+      //         classLists.forEach(({offset, classList}) => {
+      //           if (progress / 100 >= offset) {
+      //             classList.forEach(([className, value]) => {
+      //               elem.classList.toggle(className, value);
+      //             })
+      //           }
+      //         });
+      //       });
+      //     },
+      //     autoplay: false
+      // }
 
       function matchesCount(a, b) {
         return a.filter(e => b.includes(e)).length;
       }
+
+      // animation = anime(animeObj);
+      // console.warn(dom, animation)
 
       dom.forEach(e => {
         !followers.has(e) && followers.set(e, []);
@@ -163,14 +217,15 @@ export default (view, frames, layer) => {
 
       if (start === 0) {
         timeLine.play();
-      } else {
-        if (start >= duration && duration !== 0) {
-          animation.seek(duration);
-        } else {
-          animation.seek(start);
-          animation.play();
-        }
       }
+      // else {
+      //   if (start >= duration && duration !== 0) {
+      //     animation.seek(duration);
+      //   } else {
+      //     animation.seek(start);
+      //     animation.play();
+      //   }
+      // }
     });
   });
 };
