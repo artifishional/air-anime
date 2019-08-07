@@ -1,30 +1,21 @@
-import '@babel/polyfill';
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
+import { keyF } from 'air-stream';
 import { resolve } from 'path';
 
-const path = resolve('.');
+jest.setTimeout(10000);
 
-const delay = (time) => {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, time);
-  });
-};
-
-describe('Air Anima CSS', () => {
+describe(`Air Anima CSS`, () => {
   beforeAll(async () => {
-    await page.goto(`file://${path}/debug/index.html`);
-    await page.click('#gotoExamples'); // click for enable sounds
+    // setup
   });
 
-  it('should be titled "Title"', async () => {
-    await expect(page.title()).resolves.toMatch('Title');
+  it('air-stream import check', async () => {
+    await expect(keyF).toStrictEqual({ keyF: 'keyF' });
   });
 
-  it('control text on hover', async () => {
-    await page.hover('#controlText');
-    await delay(100);
-    await expect(page.$eval('#textForwBack', el => parseInt(el.textContent))).resolves.toBeGreaterThan(0);
-    // await page.hover('#dummy');
-    // await delay(300);
-    // await expect(page.$eval('#textForwBack', el => parseInt(el.textContent))).resolves.toBe(0);
+  it('puppeteer check', async () => {
+    await page.setContent('<p id="abc">123123</p>');
+    await expect(page.$eval('#abc', el => parseInt(el.textContent))).resolves.toBe(123123);
   });
 });
