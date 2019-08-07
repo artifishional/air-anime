@@ -6,12 +6,13 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <a href="" id="dummy">dummy</a>
-    <p id="p1">offset не установлен (все кейфреймы одинаковой длительности)</p>
+    <p id="p1"><button id="start1">start 1</button> offset не установлен (все кейфреймы одинаковой длительности)</p>
     <div id="first" class="trololo-class-name"></div>
-    <p id="p2">установлен offset для всех кейфреймов, добавлен easing</p>
+
+    <p id="p2"><button id="start2">start 2</button> установлен offset для всех кейфреймов, добавлен easing</p>
     <div id="second"></div>
-    <p id="p3">много изменяемых опций в разные моменты времени, групповая анимация</p>
+
+    <p id="p3"><button id="start3">start 3</button> много изменяемых опций в разные моменты времени, групповая анимация</p>
     <div class="grid _1"></div>
     <div class="grid _2"></div>
     <div class="grid _3"></div>
@@ -20,7 +21,8 @@
     <div class="grid _6"></div>
     <div class="grid _7"></div>
     <div class="grid _8"></div>
-    <p id="p4">анимация начинается не с самого начала</p>
+
+    <p id="p4"><button id="start4">start 4</button> анимация начинается не с самого начала</p>
     <div id="fourth"></div>
     <p id="p5">offset установлен не везде</p>
     <div id="fifth"></div>
@@ -42,6 +44,9 @@
     p.append(document.customData[`text${i + 1}`]);
     textBlock.append(p);
   }
+
+
+
 </script>
 
 <script src="../dist/debug.js"></script>

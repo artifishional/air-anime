@@ -163,12 +163,26 @@ const connector8 = stream8.on(({ action }) => {
   console.log(action, "complete");
 });
 
-connector1({ data: [{}, { action: "default" }] });
-connector2({ data: [{}, { action: "bounce-left-right" }] });
-connector3({
-  data: [{ colorRED: 255, colorGREEN: 140, colorBLUE: 0 }, { action: "insane" }]
+
+document.addEventListener('click', (evt) => {
+  switch (evt.target.id) {
+    case 'start1':
+      connector1({ data: [{}, { action: "default" }] });
+      break;
+    case 'start2':
+      connector2({ data: [{}, { action: "bounce-left-right" }] });
+      break;
+    case 'start3':
+      connector3({
+        data: [{ colorRED: 255, colorGREEN: 140, colorBLUE: 0 }, { action: "insane" }]
+      });
+      break;
+    case 'start4':
+      connector4({ data: [{}, { action: "not-from-the-beginning" }] });
+      break;
+  }
 });
-connector4({ data: [{}, { action: "not-from-the-beginning" }] });
+
 
 connector1({ data: [{}, { action: "not-exist" }] });
 
