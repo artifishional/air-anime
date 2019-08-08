@@ -13,7 +13,7 @@ module.exports = {
   preset: 'jest-puppeteer',
   testEnvironment: "jest-environment-puppeteer",
   testMatch: [
-    "**/dist/__tests__/**/*.[jt]s?(x)",
+    "**/__tests__/**/*.[jt]s?(x)",
   ],
   "transform": {
     "^.+\\.(mjs|js)$": "babel-jest",

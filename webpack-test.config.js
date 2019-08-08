@@ -2,20 +2,11 @@ module.exports = {
   devtool: '(none)',
   mode: 'development',
   entry: {
-    'index': './__tests__/index.js'
+    bundle: './src/index.js'
   },
   output: {
-    path: `${__dirname}/dist/__tests__/`
+    library: 'animate',
+    libraryExport: 'default',
+    path: `${__dirname}/dist`
   },
-  module: {
-    rules: [
-      {
-        test: [/\.js$/, /\.mjs$/],
-        exclude: [/node_modules/, /\.loader$/],
-        use: {
-          loader: 'babel-loader'
-        }
-      }
-    ]
-  }
 };
