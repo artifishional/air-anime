@@ -1,6 +1,6 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import animate from '../src';
+import '../dist/animate.js';
 
 jest.setTimeout(100000);
 

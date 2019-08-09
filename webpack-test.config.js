@@ -2,10 +2,13 @@ module.exports = {
   devtool: '(none)',
   mode: 'development',
   entry: {
-    'index': './__tests__/index.js'
+    'animate': './src/index.js'
   },
   output: {
-    path: `${__dirname}/dist/__tests__/`
+    library: 'animate',
+    libraryExport: 'default',
+    libraryTarget: 'global',
+    path: `${__dirname}/dist/`
   },
   module: {
     rules: [
