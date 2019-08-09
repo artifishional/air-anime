@@ -1,6 +1,4 @@
 module.exports = {
-  globalSetup: "jest-environment-puppeteer/setup",
-  globalTeardown: "jest-environment-puppeteer/teardown",
   moduleFileExtensions: [
     "mjs",
     "js",
@@ -10,8 +8,6 @@ module.exports = {
     "tsx",
     "node"
   ],
-  preset: 'jest-puppeteer',
-  testEnvironment: "jest-environment-puppeteer",
   testMatch: [
     "**/dist/__tests__/**/*.[jt]s?(x)",
   ],

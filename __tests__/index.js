@@ -1,21 +1,36 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import { keyF } from 'air-stream';
-import { resolve } from 'path';
+import animate from '../src';
 
-jest.setTimeout(10000);
+jest.setTimeout(100000);
+
+const waitFor = (delay) => new Promise((resolve => setTimeout(resolve, delay)));
 
 describe(`Air Anima CSS`, () => {
-  beforeAll(async () => {
-    // setup
-  });
+  it('more then 1 keyframe', async () => {
 
-  it('air-stream import check', async () => {
-    await expect(keyF).toStrictEqual({ keyF: 'keyF' });
-  });
+    const div = document.createElement('div');
+    div.style.height = '0px';
+    document.body.appendChild(div);
 
-  it('puppeteer check', async () => {
-    await page.setContent('<p id="abc">123123</p>');
-    await expect(page.$eval('#abc', el => parseInt(el.textContent))).resolves.toBe(123123);
+    const anime = animate(
+      [{ node: div, type: 'active' }],
+      [
+        [
+          'default',
+          () => ({ duration: 4, start: 1 }),
+          [undefined, () => ({ height: 50 })],
+          [undefined, () => ({ height: 100 })]
+        ]
+      ]
+    );
+    const connector = anime.on((evt) => {});
+    connector({ data: [{}, { action: 'default' }] });
+
+    await waitFor(1100);
+    await expect(+div.style.height.replace('px', '')).toBeGreaterThanOrEqual(50);
+    await waitFor(2100);
+    await expect(+div.style.height.replace('px', '')).toEqual(100);
+
   });
 });
