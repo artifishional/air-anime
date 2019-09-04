@@ -1,8 +1,8 @@
-import { stream } from 'air-stream';
+import { stream2 as stream } from 'air-stream';
 import utils from './utils';
 
 export default (view, frames, layer) => {
-    return stream((emt, { sweep, hook }) => {
+    return stream(null, (e, controller) => {
         const resources = view.flatMap(({ resources }) => resources).filter(({ type }) => type === 'sound').filter((v, i, a) => a.indexOf(v) === i);
 
         let timers = [];
@@ -26,15 +26,15 @@ export default (view, frames, layer) => {
             timers = [];
         }
 
-        sweep.add(animationClear);
-
-        hook.add(({ data: [data, { action = 'default' }] } = {}) => {
+        controller.todisconnect(animationClear);
+	
+	    controller.tocommand(({ data: [data, { action = 'default' }] } = {}) => {
 
             const keyframe = frames.find(([name]) => name === action);
 
             if (!keyframe) {
                 updateAll(data);
-                emt({ action: `${action}-complete` });
+                e({ action: `${action}-complete` });
                 return;
             }
 
@@ -61,7 +61,7 @@ export default (view, frames, layer) => {
             if (!duration) {
                 resources.filter(({ name }) => soundNames.indexOf(name) > -1).forEach(({ sound }) => {
                     sound.play();
-                    emt({ action: `${action}-complete` });
+                    e({ action: `${action}-complete` });
                 });
             } else {
                 if (start >= duration && duration !== 0) {
@@ -120,9 +120,9 @@ export default (view, frames, layer) => {
                 });
                 setTimeout(() => {
                     animationClear();
-                    emt({ action: `${action}-complete` });
+                    e({ action: `${action}-complete` });
                 }, duration);
             }
         });
-    });
+    })
 };

@@ -1,9 +1,12 @@
-import { stream } from "air-stream";
+import { stream2 as stream } from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
+  return stream(null, (e, controller) => {
+	
+
+    
     if (!view.map(({ type }) => type).every(e => e === "data")) {
       throw "Error: expected all nodes to have type `data`";
     }
@@ -21,17 +24,28 @@ export default (view, frames, layer) => {
         animation = null;
       }
     }
-
-    sweep.add(() => animationClear);
-
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+	
+	  controller.todisconnect(() => animationClear);
+	
+	
+	
+	  const animeObj = {
+		  targets: state,
+		  update: () => {
+			  updateAll(state);
+		  },
+		  autoplay: false
+	  };
+   
+   
+	  controller.tocommand(({ data: [data, { action = "default" }] } = {}) => {
       animationClear();
 
       const keyframe = frames.find(([name]) => name === action);
 
       if (!keyframe) {
         updateAll(data);
-        emt({ action: `${action}-complete` });
+        e({ action: `${action}-complete` });
         return;
       }
 
@@ -89,21 +103,16 @@ export default (view, frames, layer) => {
         });
       });
 
-      const animeObj = {
-        targets: state,
+      Object.assign(animeObj, {
         easing,
         duration,
-        update: () => {
-          updateAll(state);
-        },
-        complete: () => {
-          if (duration === 0) {
-            updateAll(state);
-          }
-          emt({ action: `${action}-complete` });
-        },
-        autoplay: false
-      };
+	      complete: () => {
+		      if (duration === 0) {
+			      updateAll(state);
+		      }
+		      e({ action: `${action}-complete` });
+	      },
+      });
 
       [...keyframes].forEach(([key, value]) => {
         animeObj[key] = value;

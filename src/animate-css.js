@@ -1,19 +1,20 @@
-import { stream } from "air-stream";
+import { stream2 as stream } from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 const followers = new Map();
 
 export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
+  return stream(null, (e, controller) => {
+
     if (!view.map(({ type }) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
 
     const dom = view.map(e => e.node);
     let animation = null;
-
-    sweep.add(() => {
+	
+	  controller.todisconnect(() => {
       dom.forEach(e => {
         const value = followers.get(e);
         if (value) {
@@ -27,17 +28,24 @@ export default (view, frames, layer) => {
         }
       });
     });
-
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+	
+	
+	  const animeObj = {
+		  targets: dom,
+		  autoplay: false,
+	  };
+	  
+	
+	  controller.tocommand(({ data: [data, { action = "default" }] } = {}) => {
       if (view.length === 0) {
-        emt({ action: `${action}-complete` });
+        e({ action: `${action}-complete` });
         return;
       }
 
       const keyframe = frames.find(([name]) => name === action);
 
       if (!keyframe) {
-        emt({ action: `${action}-complete` });
+        e({ action: `${action}-complete` });
         return;
       }
 
@@ -57,13 +65,12 @@ export default (view, frames, layer) => {
       const { easing = "easeOutCubic" } = prop;
       const duration = prop.duration * 1000 || 0;
       const start = prop.start * 1000 || 0;
-
-      const animeObj = {
-        targets: dom,
+		
+      Object.assign(animeObj, {
         easing,
         duration,
         complete: () => {
-          emt({ action: `${action}-complete` });
+          e({ action: `${action}-complete` });
           if (duration === 0) {
             dom.forEach(elem => {
               classWatch.forEach(({ classList }) => {
@@ -88,8 +95,8 @@ export default (view, frames, layer) => {
             }
           }
         },
-        autoplay: false
-      };
+
+      });
 
       if (keys[0].offset === 0) {
         const { offset, classList, ...rest } = keys.splice(0, 1)[0];
