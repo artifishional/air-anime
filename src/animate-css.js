@@ -70,7 +70,7 @@ export default (view, frames, unit) => {
             Object.entries(rest).forEach(([key, value]) => {
               const animDuration = i === 0 ? restoredOffsets[0] * duration * 1000 : (restoredOffsets[i] - restoredOffsets[i - 1]) * duration * 1000;
 
-              if (duration === 0) {
+              if (!duration) {
                 if (!properties.has(key)) {
                   properties.set(key, []);
                   animParams.push(key);
