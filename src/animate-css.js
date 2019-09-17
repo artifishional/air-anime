@@ -100,11 +100,7 @@ export default (view, frames, unit) => {
           }
         })
       });
-
-      if (unit.prop.label === 'chip') {
-        console.warn(classLists)
-      }
-
+      
       if ([...properties].length) {
         [...properties].map(([key, [{value}]]) => {
           anime.set(dom, {[key]: value});
