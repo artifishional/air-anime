@@ -68,10 +68,9 @@ export default (view, frames, unit) => {
           }
           if (Object.keys(rest).length) {
             Object.entries(rest).forEach(([key, value]) => {
+              const animDuration = i === 0 ? restoredOffsets[0] * duration * 1000 : (restoredOffsets[i] - restoredOffsets[i - 1]) * duration * 1000;
 
-              const animDuration = i === 0 ? 0 : (restoredOffsets[i] - restoredOffsets[i - 1]) * duration * 1000;
-
-              if (animDuration === 0) {
+              if (duration === 0) {
                 if (!properties.has(key)) {
                   properties.set(key, []);
                   animParams.push(key);
@@ -100,7 +99,7 @@ export default (view, frames, unit) => {
           }
         })
       });
-      
+
       if ([...properties].length) {
         [...properties].map(([key, [{value}]]) => {
           anime.set(dom, {[key]: value});
