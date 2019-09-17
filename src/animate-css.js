@@ -4,7 +4,7 @@ import utils from "./utils";
 
 const followers = new Map();
 
-export default (view, frames) => {
+export default (view, frames, unit) => {
   return stream((emt, {sweep, hook}) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
@@ -101,6 +101,10 @@ export default (view, frames) => {
         })
       });
 
+      if (unit.prop.label === 'chip') {
+        console.warn(classLists)
+      }
+
       if ([...properties].length) {
         [...properties].map(([key, [{value}]]) => {
           anime.set(dom, {[key]: value});
@@ -108,6 +112,13 @@ export default (view, frames) => {
       }
 
       if (![...animations].length) {
+        dom.forEach(elem => {
+          classLists.forEach(({classList}) => {
+            classList.forEach(([className, value]) => {
+              elem.classList.toggle(className, value);
+            })
+          });
+        });
         emt({action: `${action}-complete`});
         return;
       }
