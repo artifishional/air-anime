@@ -68,122 +68,81 @@ describe(`Air Anima CSS`, () => {
         await expect(+div.style.opacity).toEqual(0);
     });
 
-    // it('more then 1 keyframe', async () => {
-    //     await page.evaluate(() => {
-    //         const div = document.createElement('div');
-    //         div.setAttribute('id', 'pain');
-    //         document.body.appendChild(div);
-    //
-    //         const anime = animate(
-    //             [{node: div, type: 'active'}],
-    //             [
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 2}),
-    //                     [0, () => ({left: 0})],
-    //                     [0.5, () => ({left: 400})],
-    //                     [1, () => ({left: 50})]
-    //                 ],
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 5, easing: 'linear'}),
-    //                     [0, () => ({opacity: 1})],
-    //                     [1, () => ({opacity: 0})]
-    //                 ]
-    //             ]
-    //         );
-    //         const connector = anime.on((evt) => {
-    //         });
-    //         connector({data: [{}, {action: 'default'}]});
-    //     });
-    //
-    //     await page.waitFor(2100);
-    //     await expect(page.$eval('#pain', el => el.style.left)).resolves.toBe('50px');
-    //
-    //     await page.waitFor(3000);
-    //     await expect(page.$eval('#pain', el => el.style.opacity)).resolves.toBe('0');
-    //
-    //     await page.setContent('');
-    // });
+    it('with start', async () => {
 
-    // it('with start', async () => {
-    //     await page.evaluate(() => {
-    //         const div = document.createElement('div');
-    //         div.setAttribute('id', 'pain');
-    //         document.body.appendChild(div);
-    //
-    //         const anime = animate(
-    //             [{node: div, type: 'active'}],
-    //             [
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 5,start:4}),
-    //                     [0, () => ({scaleX:1, left:20})],
-    //                     [0.25, () => ({scaleX:2, left:100})],
-    //                     [1, () => ({scaleX:1.5, left:10})]
-    //                 ],
-    //             ]
-    //         );
-    //         const connector = anime.on((evt) => {
-    //         });
-    //         connector({data: [{}, {action: 'default'}]});
-    //     });
-    //
-    //     await page.waitFor(1100);
-    //     await expect(page.$eval('#pain', el => el.style.left)).resolves.toBe('10px');
-    //     await expect(page.$eval('#pain', el => el.style.transform)).resolves.toBe('scaleX(1.5)');
-    //
-    //     await page.setContent('');
-    // });
-    //
-    // it('a few transforms', async () => {
-    //     await page.evaluate(() => {
-    //         const div = document.createElement('div');
-    //         div.setAttribute('id', 'pain');
-    //         document.body.appendChild(div);
-    //
-    //         const anime = animate(
-    //             [{node: div, type: 'active'}],
-    //             [
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 1}),
-    //                     [0, () => ({scaleX:1, left:20})],
-    //                     [0.25, () => ({scaleX:2, left:100})],
-    //                     [1, () => ({scaleX:1.5, left:10})]
-    //                 ],
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 1}),
-    //                     [0, () => ({scaleY:1.5})],
-    //                     [0.25, () => ({scaleY:2})],
-    //                     [0.5, () => ({scaleY:3})],
-    //                     [1, () => ({scaleY:1})]
-    //                 ],
-    //                 [
-    //                     "default",
-    //                     () => ({duration: 2, start: 1}),
-    //                     [0, () => ({opacity:1})],
-    //                     [0.25, () => ({opacity:0.5})],
-    //                     [0.75, () => ({opacity:0})],
-    //                     [1, () => ({opacity:1})]
-    //                 ]
-    //             ]
-    //         );
-    //         const connector = anime.on((evt) => {});
-    //         connector({data: [{}, {action: 'default'}]});
-    //     });
-    //
-    //     await page.waitFor(1100);
-    //     await expect(page.$eval('#pain', el => Math.round(parseFloat(el.style.left)))).resolves.toBe(10);
-    //     await expect(page.$eval('#pain', el => Math.round(parseFloat(el.style.opacity)))).resolves.toBe(1);
-    //     await expect(page.$eval('#pain', el => {
-    //         return el.style.transform;
-    //     })).resolves.toBe('scaleX(1.5) scaleY(1)');
-    //
-    //
-    //     await page.setContent('');
-    // });
+        const div = document.createElement('div');
+        div.style.left = '0px';
+        document.body.appendChild(div);
+
+        const anime = animate(
+            [{node: div, type: 'active'}],
+            [
+                [
+                    "default",
+                    () => ({duration: 5,start:4}),
+                    [0, () => ({scaleX:1, left:20})],
+                    [0.25, () => ({scaleX:2, left:100})],
+                    [1, () => ({scaleX:1.5, left:10})]
+                ],
+            ]
+        );
+        const connector = anime.on((evt) => {});
+        connector({data: [{}, {action: 'default'}]});
+
+        await waitFor(1100);
+        await expect(+div.style.left.replace('px', '')).toEqual(10);
+        await expect(div.style.transform.replace(' ', '')).toEqual('scaleX(1.5)');
+    });
+
+    it('a few transforms', async () => {
+
+        const div = document.createElement('div');
+        div.style.left = '0px';
+        document.body.appendChild(div);
+
+        const anime = animate(
+            [{node: div, type: 'active'}],
+            [
+                [
+                    "default",
+                    () => ({duration: 1}),
+                    [0, () => ({scaleX:1, left:20})],
+                    [0.25, () => ({scaleX:2, left:100})],
+                    [1, () => ({scaleX:1.5, left:10})]
+                ],
+                [
+                    "default",
+                    () => ({duration: 1}),
+                    [0, () => ({scaleY:1.5})],
+                    [0.25, () => ({scaleY:2})],
+                    [0.5, () => ({scaleY:3})],
+                    [1, () => ({scaleY:1})]
+                ],
+                [
+                    "default",
+                    () => ({duration: 2, start: 1}),
+                    [0, () => ({opacity:1})],
+                    [0.25, () => ({opacity:0.5})],
+                    [0.75, () => ({opacity:0})],
+                    [1, () => ({opacity:1})]
+                ]
+            ]
+        );
+        const connector = anime.on((evt) => {});
+        connector({data: [{}, {action: 'default'}]});
+
+        await waitFor(1100);
+        await expect(+div.style.left.replace('px', '')).toEqual(10);
+        await expect(div.style.transform.replace(' ', '')).toEqual('scaleX(1.5)');
+
+        //     await page.waitFor(1100);
+        //     await expect(page.$eval('#pain', el => Math.round(parseFloat(el.style.left)))).resolves.toBe(10);
+        //     await expect(page.$eval('#pain', el => Math.round(parseFloat(el.style.opacity)))).resolves.toBe(1);
+        //     await expect(page.$eval('#pain', el => {
+        //         return el.style.transform;
+        //     })).resolves.toBe('scaleX(1.5) scaleY(1)');
+    });
+
     //
     // it('without offsets', async () => {
     //     await page.evaluate(() => {

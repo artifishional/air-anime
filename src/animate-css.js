@@ -1,12 +1,12 @@
-import { stream } from "air-stream";
+import {stream} from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 const followers = new Map();
 
-export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
-    if (!view.map(({ type }) => type).every(e => e === "active")) {
+export default (view, frames) => {
+  return stream((emt, {sweep, hook}) => {
+    if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
 
@@ -17,7 +17,7 @@ export default (view, frames, layer) => {
       dom.forEach(e => {
         const value = followers.get(e);
         if (value) {
-          const index = value.findIndex(({ anim }) => anim === animation);
+          const index = value.findIndex(({anim}) => anim === animation);
           animation.pause();
           value.splice(index, 1);
           if (!value.length) {
@@ -28,102 +28,152 @@ export default (view, frames, layer) => {
       });
     });
 
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+    hook.add(({data: [data, {action = "default"}]} = {}) => {
       if (view.length === 0) {
-        emt({ action: `${action}-complete` });
+        emt({action: `${action}-complete`});
         return;
       }
 
-      const keyframe = frames.find(([name]) => name === action);
+      const allKeyframes = frames.filter(([name]) => name === action);
 
-      if (!keyframe) {
-        emt({ action: `${action}-complete` });
+      if (!allKeyframes.length) {
+        emt({action: `${action}-complete`});
         return;
       }
 
-      const prop = keyframe[1] ? keyframe[1](data) : {};
+      const classLists = [];
+      const animParams = [];
+      const animations = new Map();
+      const properties = new Map();
 
-      const keys = keyframe.slice(2).map(([offset, prop]) => ({
-        offset,
-        ...prop(data)
-      }));
+      allKeyframes.forEach((keyframe) => {
+        const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
+        const {easing, delay, duration, start} = keyframeProps;
 
-      if (!utils.checkOffsetValidity(keys)) {
-        throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        const offsets = keyframe.slice(2).map(([offset, func]) => {
+          const {offset: elemOffset} = func(data);
+          return elemOffset || offset;
+        });
+
+        const restoredOffsets = utils.restoreOffset(offsets);
+
+        if (offsets && !utils.checkOffsetsValidity(restoredOffsets)) {
+          throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        }
+
+        keyframe.slice(2).forEach(([offset, func], i) => {
+          const {classList, offset: elemOffset, ...rest} = func(data);
+          if (classList) {
+            classLists.push({offset: restoredOffsets[i], classList: Object.entries(classList)});
+          }
+          if (Object.keys(rest).length) {
+            Object.entries(rest).forEach(([key, value]) => {
+
+              const animDuration = i === 0 ? 0 : (restoredOffsets[i] - restoredOffsets[i - 1]) * duration * 1000;
+
+              if (animDuration === 0) {
+                if (!properties.has(key)) {
+                  properties.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = properties.get(key);
+
+                arr.push({
+                  value
+                });
+              } else {
+                if (!animations.has(key)) {
+                  animations.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = animations.get(key);
+
+                arr.push({
+                  value,
+                  duration: animDuration,
+                  delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                  easing,
+                  start: start && start * 1000 || 0
+                });
+              }
+            })
+          }
+        })
+      });
+
+      if ([...properties].length) {
+        [...properties].map(([key, [{value}]]) => {
+          anime.set(dom, {[key]: value});
+        });
       }
 
-      const keyframes = new Map();
+      if (![...animations].length) {
+        emt({action: `${action}-complete`});
+        return;
+      }
 
-      const { easing = "easeOutCubic" } = prop;
-      const duration = prop.duration * 1000 || 0;
-      const start = prop.start * 1000 || 0;
+      const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
 
-      const animeObj = {
+      const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
+
+      animation = anime.timeline({
         targets: dom,
-        easing,
-        duration,
+        autoplay: false,
         complete: () => {
-          emt({ action: `${action}-complete` });
+          emt({action: `${action}-complete`});
           if (duration === 0) {
             dom.forEach(elem => {
-              classWatch.forEach(({ classList }) => {
+              classLists.forEach(({classList}) => {
                 classList.forEach(([className, value]) => {
                   elem.classList.toggle(className, value);
-                });
+                })
               });
-            });
+            })
           }
         },
         update: anim => {
-          if (classWatch.length > 0) {
-            const { offset, classList } = classWatch[0];
-            const { progress } = anim;
-            if (progress / 100 >= offset) {
-              dom.forEach(elem => {
+          const {progress} = anim;
+          dom.forEach(elem => {
+            classLists.forEach(({offset, classList}) => {
+              if (progress / 100 >= offset) {
                 classList.forEach(([className, value]) => {
                   elem.classList.toggle(className, value);
-                });
-              });
-              classWatch.shift();
-            }
-          }
-        },
-        autoplay: false
-      };
-
-      if (keys[0].offset === 0) {
-        const { offset, classList, ...rest } = keys.splice(0, 1)[0];
-        anime.set(dom, rest);
-      }
-
-      utils.restoreOffset(keys);
-      const classWatch = keys
-        .filter(key => key.classList)
-        .map(({ offset, classList }) => ({ offset, classList: Object.entries(classList) }));
-
-      keys.forEach(key => {
-        const { offset, classList, ...vars } = key;
-        Object.entries(vars).forEach(([key, value]) => {
-          if (!keyframes.has(key)) {
-            keyframes.set(key, []);
-          }
-          const arr = keyframes.get(key);
-          arr.push({
-            value,
-            duration: offset
-              ? offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)
-              : undefined
+                })
+              }
+            });
           });
-        });
+        },
+        easing: "easeOutCubic"
       });
 
-      const animParams = [];
-      [...keyframes].forEach(([key, value]) => {
-        animeObj[key] = value;
-        animParams.push(key);
-      });
+      const test = [...animations].reduce((acc, [key, value]) => {
+        const [{start}] = value;
+        if (start !== 0) {
+          return {
+            ...acc,
+            offs: [
+              ...acc.offs,
+              {
+                [key]: value,
+                start
+              }
+            ]
+          }
+        }
+        return {
+          ...acc,
+          rest: {
+            ...acc.rest,
+            [key]: value
+          }
+        }
+      }, {rest: {}, offs: []});
 
-      animation = anime(animeObj);
+      animation.add({...test.rest}, 0);
+
+      test.offs.forEach(({start, ...rest}) => {
+        animation.add({...rest}, -start)
+      });
 
       function matchesCount(a, b) {
         return a.filter(e => b.includes(e)).length;
@@ -133,29 +183,20 @@ export default (view, frames, layer) => {
         !followers.has(e) && followers.set(e, []);
 
         followers.set(
-          e,
-          followers.get(e).filter(({ anim, params }) => {
-            if (matchesCount(params, animParams)) {
-              anim.pause();
-              return false;
-            }
-            return true;
-          })
+            e,
+            followers.get(e).filter(({anim, params}) => {
+              if (matchesCount(params, animParams)) {
+                anim.pause();
+                return false;
+              }
+              return true;
+            })
         );
 
-        followers.get(e).push({ anim: animation, params: animParams });
+        followers.get(e).push({anim: animation, params: animParams});
       });
 
-      if (start === 0) {
-        animation.play();
-      } else {
-        if (start >= duration && duration !== 0) {
-          animation.seek(duration);
-        } else {
-          animation.seek(start);
-          animation.play();
-        }
-      }
+      animation.play();
     });
   });
 };
