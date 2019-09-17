@@ -89,6 +89,18 @@ div {
   background-color: rgb(255, 150, 0);
 }
 
+#seventh {
+  top: 750px;
+  left: 0;
+  background-color: deeppink;
+}
+
+#eight {
+  top: 850px;
+  left: 0;
+  background-color: plum;
+}
+
 p {
   position: relative;
 }
@@ -103,6 +115,13 @@ p {
 }
 #p5 {
   top: 500px;
+}
+
+#p7 {
+   top: 700px;
+ }
+#p8 {
+  top: 800px;
 }
 
 .ololo-class {
