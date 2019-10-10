@@ -1,19 +1,19 @@
-import {stream} from "air-stream";
+import {stream2 as stream} from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 const followers = new Map();
 
 export default (view, frames, unit) => {
-  return stream((emt, {sweep, hook}) => {
+  return stream((e, ctr) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
 
     const dom = view.map(e => e.node);
     let animation = null;
-
-    sweep.add(() => {
+  
+    ctr.todisconnect(() => {
       dom.forEach(e => {
         const value = followers.get(e);
         if (value) {
@@ -28,16 +28,16 @@ export default (view, frames, unit) => {
       });
     });
 
-    hook.add(({data: [data, {action = "default"}]} = {}) => {
+    ctr.tocommand(({data: [data, {action = "default"}]} = {}) => {
       if (view.length === 0) {
-        emt({action: `${action}-complete`});
+        e({action: `${action}-complete`});
         return;
       }
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
       if (!allKeyframes.length) {
-        emt({action: `${action}-complete`});
+        e({action: `${action}-complete`});
         return;
       }
 
@@ -114,7 +114,7 @@ export default (view, frames, unit) => {
             })
           });
         });
-        emt({action: `${action}-complete`});
+        e({action: `${action}-complete`});
         return;
       }
 
@@ -126,7 +126,7 @@ export default (view, frames, unit) => {
         targets: dom,
         autoplay: false,
         complete: () => {
-          emt({action: `${action}-complete`});
+          e({action: `${action}-complete`});
           if (duration === 0) {
             dom.forEach(elem => {
               classLists.forEach(({classList}) => {
