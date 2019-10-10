@@ -5,7 +5,7 @@ import utils from "./utils";
 const followers = new Map();
 
 export default (view, frames, unit) => {
-  return stream((e, ctr) => {
+  return stream(null, (e, ctr) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
