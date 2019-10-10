@@ -1,13 +1,12 @@
 export default {
-  restoreOffset: function(kf) {
-    const off = kf.map(({ offset }) => offset);
+  restoreOffset: function(off) {
     const groups = [];
     const set = [];
 
     let prev = 0;
     off.forEach(e => {
       set.push(e);
-      if (e !== undefined) {
+      if (e !== undefined && e !== null) {
         groups.push({
           prev,
           dur: e - prev,
@@ -39,12 +38,9 @@ export default {
     });
 
     const offsets = groups.map(({ values }) => values).reduce((acc, val) => acc.concat(val), []);
-
-    kf.forEach((e, i) => {
-      e.offset = offsets[i];
-    });
+    return offsets;
   },
-  //
+
   checkOffsetValidity: function(kf) {
     let last = -1;
     for (let i = 0; i < kf.length; i++) {
@@ -54,6 +50,19 @@ export default {
       }
       if (offset) {
         last = offset;
+      }
+    }
+    return true;
+  },
+
+  checkOffsetsValidity: function(offsets) {
+    let last = -1;
+    for (let i = 0; i < offsets.length; i++) {
+      if (offsets[i] < 0 || offsets[i] > 1 || offsets[i] <= last || last === 1) {
+        return false;
+      }
+      if (offsets[i]) {
+        last = offsets[i];
       }
     }
     return true;
