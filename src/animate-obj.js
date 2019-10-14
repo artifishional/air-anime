@@ -1,9 +1,9 @@
-import { stream } from "air-stream";
+import {stream2 as stream} from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
+  return stream(null, (e, ctr) => {
     if (!view.map(({ type }) => type).every(e => e === "data")) {
       throw "Error: expected all nodes to have type `data`";
     }
@@ -22,16 +22,16 @@ export default (view, frames, layer) => {
       }
     }
 
-    sweep.add(() => animationClear);
+    ctr.todisconnect(() => animationClear);
 
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+    ctr.tocommand(({ data: [data, { action = "default" }] } = {}) => {
       animationClear();
 
       const keyframe = frames.find(([name]) => name === action);
 
       if (!keyframe) {
         updateAll(data);
-        emt({ action: `${action}-complete` });
+        e({ action: `${action}-complete` });
         return;
       }
 
@@ -100,7 +100,7 @@ export default (view, frames, layer) => {
           if (duration === 0) {
             updateAll(state);
           }
-          emt({ action: `${action}-complete` });
+          e({ action: `${action}-complete` });
         },
         autoplay: false
       };
