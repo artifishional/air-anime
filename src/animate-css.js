@@ -4,7 +4,7 @@ import utils from "./utils";
 
 const followers = new Map();
 
-export default (view, frames, layer) => {
+export default (view, frames, unit) => {
   return stream((emt, {sweep, hook}) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
@@ -44,6 +44,7 @@ export default (view, frames, layer) => {
       const classLists = [];
       const animParams = [];
       const animations = new Map();
+      const properties = new Map();
 
       allKeyframes.forEach((keyframe) => {
         const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
@@ -54,38 +55,58 @@ export default (view, frames, layer) => {
           return elemOffset || offset;
         });
 
-        if (offsets && !utils.checkOffsetsValidity(offsets)) {
+        const restoredOffsets = utils.restoreOffset(offsets);
+
+        if (offsets && !utils.checkOffsetsValidity(restoredOffsets)) {
           throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
         }
-
-        const durations = offsets.map((offset) => offset && duration && offset * duration || 0);
 
         keyframe.slice(2).forEach(([offset, func], i) => {
           const {classList, offset: elemOffset, ...rest} = func(data);
           if (classList) {
-            classLists.push({offset: offset || 0, classList: Object.entries(classList)});
-          } else if (Object.keys(rest).length) {
+            classLists.push({offset: restoredOffsets[i], classList: Object.entries(classList)});
+          }
+          if (Object.keys(rest).length) {
             Object.entries(rest).forEach(([key, value]) => {
-              if (!animations.has(key)) {
-                animations.set(key, []);
-                animParams.push(key);
+              const animDuration = i === 0 ? restoredOffsets[0] * duration * 1000 : (restoredOffsets[i] - restoredOffsets[i - 1]) * duration * 1000;
+
+              if (!duration) {
+                if (!properties.has(key)) {
+                  properties.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = properties.get(key);
+
+                arr.push({
+                  value
+                });
+              } else {
+                if (!animations.has(key)) {
+                  animations.set(key, []);
+                  animParams.push(key);
+                }
+                const arr = animations.get(key);
+
+                arr.push({
+                  value,
+                  duration: animDuration,
+                  delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                  easing,
+                  start: start && start * 1000 || 0
+                });
               }
-              const arr = animations.get(key);
-              const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
-              arr.push({
-                value,
-                duration,
-                delay: i === 0 ? delay && delay * 1000 || 0 : 0,
-                easing,
-                start: start && start * 1000 || 0
-              });
             })
           }
         })
       });
 
+      if ([...properties].length) {
+        [...properties].map(([key, [{value}]]) => {
+          anime.set(dom, {[key]: value});
+        });
+      }
+
       if (![...animations].length) {
-        emt({action: `${action}-complete`});
         dom.forEach(elem => {
           classLists.forEach(({classList}) => {
             classList.forEach(([className, value]) => {
@@ -93,18 +114,17 @@ export default (view, frames, layer) => {
             })
           });
         });
+        emt({action: `${action}-complete`});
         return;
       }
 
       const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
 
       const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
-      const start = 0;
 
-      const timeLine = anime.timeline({
+      animation = anime.timeline({
         targets: dom,
-        easing: 'easeOutCubic',
-        // duration,
+        autoplay: false,
         complete: () => {
           emt({action: `${action}-complete`});
           if (duration === 0) {
@@ -129,81 +149,48 @@ export default (view, frames, layer) => {
             });
           });
         },
-        autoplay: false
+        easing: "easeOutCubic"
       });
 
-
-      [...animations].forEach(([key, value]) => {
+      const test = [...animations].reduce((acc, [key, value]) => {
         const [{start}] = value;
+        if (start !== 0) {
+          return {
+            ...acc,
+            offs: [
+              ...acc.offs,
+              {
+                [key]: value,
+                start
+              }
+            ]
+          }
+        }
+        return {
+          ...acc,
+          rest: {
+            ...acc.rest,
+            [key]: value
+          }
+        }
+      }, {rest: {}, offs: []});
 
-        // const animation = anime({
-        //     targets: dom,
-        //     [key]: [...value],
-        //     autoplay: false
-        // });
-        //
-        // animation.seek(start);
-        // console.warn(dom, animation);
-        timeLine.add({
-          targets: dom,
-          [key]: [...value]
-          // currentTime: start
-        }, -start);
+      animation.add({...test.rest}, 0);
+
+      test.offs.forEach(({start, ...rest}) => {
+        animation.add({...rest}, -start)
       });
-
-      console.warn(dom, timeLine)
-
-      // const animeObj = {
-      //     targets: dom,
-      //     easing: 'easeOutCubic',
-      //     duration,
-      //     ...[...animations].reduce((acc, [key, value]) => {
-      //       // const [{start}] = value;
-      //       return {
-      //         ...acc,
-      //         [key]: value
-      //       }
-      //     }, {}),
-      //     complete: () => {
-      //       emt({action: `${action}-complete`});
-      //       if (duration === 0) {
-      //         dom.forEach(elem => {
-      //           classLists.forEach(({classList}) => {
-      //             classList.forEach(([className, value]) => {
-      //               elem.classList.toggle(className, value);
-      //             })
-      //           });
-      //         })
-      //       }
-      //     },
-      //     update: anim => {
-      //       const {progress} = anim;
-      //       dom.forEach(elem => {
-      //         classLists.forEach(({offset, classList}) => {
-      //           if (progress / 100 >= offset) {
-      //             classList.forEach(([className, value]) => {
-      //               elem.classList.toggle(className, value);
-      //             })
-      //           }
-      //         });
-      //       });
-      //     },
-      //     autoplay: false
-      // }
 
       function matchesCount(a, b) {
         return a.filter(e => b.includes(e)).length;
       }
-
-      // animation = anime(animeObj);
-      // console.warn(dom, animation)
 
       dom.forEach(e => {
         !followers.has(e) && followers.set(e, []);
 
         followers.set(
             e,
-            followers.get(e).filter(({ anim, params }) => {
+            followers.get(e).filter(({anim, params}) => {
               if (matchesCount(params, animParams)) {
                 anim.pause();
                 return false;
@@ -212,20 +199,10 @@ export default (view, frames, layer) => {
             })
         );
 
-        followers.get(e).push({ anim: timeLine, params: animParams });
+        followers.get(e).push({anim: animation, params: animParams});
       });
 
-      if (start === 0) {
-        timeLine.play();
-      }
-      // else {
-      //   if (start >= duration && duration !== 0) {
-      //     animation.seek(duration);
-      //   } else {
-      //     animation.seek(start);
-      //     animation.play();
-      //   }
-      // }
+      animation.play();
     });
   });
 };
