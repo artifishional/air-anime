@@ -57,5 +57,18 @@ export default {
       }
     }
     return true;
+  },
+
+  checkOffsetsValidity: function(offsets) {
+    let last = -1;
+    for (let i = 0; i < offsets.length; i++) {
+      if (offsets[i] < 0 || offsets[i] > 1 || offsets[i] <= last || last === 1) {
+        return false;
+      }
+      if (offsets[i]) {
+        last = offsets[i];
+      }
+    }
+    return true;
   }
 };

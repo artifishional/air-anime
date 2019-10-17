@@ -1,12 +1,12 @@
-import { stream } from "air-stream";
+import {stream} from "air-stream";
 import anime from "animejs/lib/anime.es.js";
 import utils from "./utils";
 
 const followers = new Map();
 
 export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
-    if (!view.map(({ type }) => type).every(e => e === "active")) {
+  return stream((emt, {sweep, hook}) => {
+    if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
 
@@ -17,7 +17,7 @@ export default (view, frames, layer) => {
       dom.forEach(e => {
         const value = followers.get(e);
         if (value) {
-          const index = value.findIndex(({ anim }) => anim === animation);
+          const index = value.findIndex(({anim}) => anim === animation);
           animation.pause();
           value.splice(index, 1);
           if (!value.length) {
@@ -28,134 +28,204 @@ export default (view, frames, layer) => {
       });
     });
 
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+    hook.add(({data: [data, {action = "default"}]} = {}) => {
       if (view.length === 0) {
-        emt({ action: `${action}-complete` });
+        emt({action: `${action}-complete`});
         return;
       }
 
-      const keyframe = frames.find(([name]) => name === action);
+      const allKeyframes = frames.filter(([name]) => name === action);
 
-      if (!keyframe) {
-        emt({ action: `${action}-complete` });
+      if (!allKeyframes.length) {
+        emt({action: `${action}-complete`});
         return;
       }
 
-      const prop = keyframe[1] ? keyframe[1](data) : {};
+      const classLists = [];
+      const animParams = [];
+      const animations = new Map();
 
-      const keys = keyframe.slice(2).map(([offset, prop]) => ({
-        offset,
-        ...prop(data)
-      }));
+      allKeyframes.forEach((keyframe) => {
+        const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
+        const {easing, delay, duration, start} = keyframeProps;
 
-      if (!utils.checkOffsetValidity(keys)) {
-        throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        const offsets = keyframe.slice(2).map(([offset, func]) => {
+          const {offset: elemOffset} = func(data);
+          return elemOffset || offset;
+        });
+
+        if (offsets && !utils.checkOffsetsValidity(offsets)) {
+          throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
+        }
+
+        const durations = offsets.map((offset) => offset && duration && offset * duration || 0);
+
+        keyframe.slice(2).forEach(([offset, func], i) => {
+          const {classList, offset: elemOffset, ...rest} = func(data);
+          if (classList) {
+            classLists.push({offset: offset || 0, classList: Object.entries(classList)});
+          } else if (Object.keys(rest).length) {
+            Object.entries(rest).forEach(([key, value]) => {
+              if (!animations.has(key)) {
+                animations.set(key, []);
+                animParams.push(key);
+              }
+              const arr = animations.get(key);
+              const duration = i === 0 ? 0 : (durations[i] - durations[i - 1]) * 1000;
+              arr.push({
+                value,
+                duration,
+                delay: i === 0 ? delay && delay * 1000 || 0 : 0,
+                easing,
+                start: start && start * 1000 || 0
+              });
+            })
+          }
+        })
+      });
+
+      if (![...animations].length) {
+        emt({action: `${action}-complete`});
+        dom.forEach(elem => {
+          classLists.forEach(({classList}) => {
+            classList.forEach(([className, value]) => {
+              elem.classList.toggle(className, value);
+            })
+          });
+        });
+        return;
       }
 
-      const keyframes = new Map();
+      const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
 
-      const { easing = "easeOutCubic" } = prop;
-      const duration = prop.duration * 1000 || 0;
-      const start = prop.start * 1000 || 0;
+      const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
+      const start = 0;
 
-      const animeObj = {
+      const timeLine = anime.timeline({
         targets: dom,
-        easing,
-        duration,
+        easing: 'easeOutCubic',
+        // duration,
         complete: () => {
-          emt({ action: `${action}-complete` });
+          emt({action: `${action}-complete`});
           if (duration === 0) {
             dom.forEach(elem => {
-              classWatch.forEach(({ classList }) => {
+              classLists.forEach(({classList}) => {
                 classList.forEach(([className, value]) => {
                   elem.classList.toggle(className, value);
-                });
+                })
               });
-            });
+            })
           }
         },
         update: anim => {
-          if (classWatch.length > 0) {
-            const { offset, classList } = classWatch[0];
-            const { progress } = anim;
-            if (progress / 100 >= offset) {
-              dom.forEach(elem => {
+          const {progress} = anim;
+          dom.forEach(elem => {
+            classLists.forEach(({offset, classList}) => {
+              if (progress / 100 >= offset) {
                 classList.forEach(([className, value]) => {
                   elem.classList.toggle(className, value);
-                });
-              });
-              classWatch.shift();
-            }
-          }
+                })
+              }
+            });
+          });
         },
         autoplay: false
-      };
-
-      if (keys[0].offset === 0) {
-        const { offset, classList, ...rest } = keys.splice(0, 1)[0];
-        anime.set(dom, rest);
-      }
-
-      utils.restoreOffset(keys);
-      const classWatch = keys
-        .filter(key => key.classList)
-        .map(({ offset, classList }) => ({ offset, classList: Object.entries(classList) }));
-
-      keys.forEach(key => {
-        const { offset, classList, ...vars } = key;
-        Object.entries(vars).forEach(([key, value]) => {
-          if (!keyframes.has(key)) {
-            keyframes.set(key, []);
-          }
-          const arr = keyframes.get(key);
-          arr.push({
-            value,
-            duration: offset
-              ? offset * duration - arr.map(e => e.duration).reduce((p, c) => (p || 0) + (c || 0), 0)
-              : undefined
-          });
-        });
       });
 
-      const animParams = [];
-      [...keyframes].forEach(([key, value]) => {
-        animeObj[key] = value;
-        animParams.push(key);
+
+      [...animations].forEach(([key, value]) => {
+        const [{start}] = value;
+
+        // const animation = anime({
+        //     targets: dom,
+        //     [key]: [...value],
+        //     autoplay: false
+        // });
+        //
+        // animation.seek(start);
+        // console.warn(dom, animation);
+        timeLine.add({
+          targets: dom,
+          [key]: [...value]
+          // currentTime: start
+        }, -start);
       });
 
-      animation = anime(animeObj);
+      console.warn(dom, timeLine)
+
+      // const animeObj = {
+      //     targets: dom,
+      //     easing: 'easeOutCubic',
+      //     duration,
+      //     ...[...animations].reduce((acc, [key, value]) => {
+      //       // const [{start}] = value;
+      //       return {
+      //         ...acc,
+      //         [key]: value
+      //       }
+      //     }, {}),
+      //     complete: () => {
+      //       emt({action: `${action}-complete`});
+      //       if (duration === 0) {
+      //         dom.forEach(elem => {
+      //           classLists.forEach(({classList}) => {
+      //             classList.forEach(([className, value]) => {
+      //               elem.classList.toggle(className, value);
+      //             })
+      //           });
+      //         })
+      //       }
+      //     },
+      //     update: anim => {
+      //       const {progress} = anim;
+      //       dom.forEach(elem => {
+      //         classLists.forEach(({offset, classList}) => {
+      //           if (progress / 100 >= offset) {
+      //             classList.forEach(([className, value]) => {
+      //               elem.classList.toggle(className, value);
+      //             })
+      //           }
+      //         });
+      //       });
+      //     },
+      //     autoplay: false
+      // }
 
       function matchesCount(a, b) {
         return a.filter(e => b.includes(e)).length;
       }
 
+      // animation = anime(animeObj);
+      // console.warn(dom, animation)
+
       dom.forEach(e => {
         !followers.has(e) && followers.set(e, []);
 
         followers.set(
-          e,
-          followers.get(e).filter(({ anim, params }) => {
-            if (matchesCount(params, animParams)) {
-              anim.pause();
-              return false;
-            }
-            return true;
-          })
+            e,
+            followers.get(e).filter(({ anim, params }) => {
+              if (matchesCount(params, animParams)) {
+                anim.pause();
+                return false;
+              }
+              return true;
+            })
         );
 
-        followers.get(e).push({ anim: animation, params: animParams });
+        followers.get(e).push({ anim: timeLine, params: animParams });
       });
 
       if (start === 0) {
-        animation.play();
-      } else {
-        if (start >= duration && duration !== 0) {
-          animation.seek(duration);
-        } else {
-          animation.seek(start);
-          animation.play();
-        }
+        timeLine.play();
       }
+      // else {
+      //   if (start >= duration && duration !== 0) {
+      //     animation.seek(duration);
+      //   } else {
+      //     animation.seek(start);
+      //     animation.play();
+      //   }
+      // }
     });
   });
 };
