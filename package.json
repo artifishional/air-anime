@@ -12,6 +12,7 @@
   "author": ".ai",
   "license": "ISC",
   "devDependencies": {
+    "air-stream": "^0.6.0",
     "@babel/core": "^7.0.0",
     "@babel/plugin-transform-modules-commonjs": "^7.5.0",
     "@babel/preset-env": "^7.0.0",
@@ -28,7 +29,6 @@
     "webpack-cli": "^3.3.0"
   },
   "dependencies": {
-    "air-stream": "^0.6.0",
     "animejs": "^3.0.1",
     "howler": "^2.1.2"
   }
