@@ -68,3 +68,21 @@ export default {
     return true;
   }
 };
+
+export function fillKeyFrames ( keyframes, data ) {
+  for (let i = keyframes.length; i -- ;) {
+    const keyframe = keyframes[i] = [ ...keyframes[i] ];
+    const props = keyframe[1] = keyframe[1] ? keyframe[1](data) : {};
+    if(!props) {
+      return null;
+    }
+    for(let i = 2; i < keyframe.length; i ++ ) {
+      const keys = keyframe[i][1](data);
+      if(!keys) {
+        return null;
+      }
+      keyframe[i] = [ keyframe[i][0], keys ];
+    }
+  }
+  return keyframes;
+}

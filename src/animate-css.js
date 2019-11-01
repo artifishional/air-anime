@@ -1,6 +1,6 @@
 import {stream} from "air-stream";
 import anime from "animejs/lib/anime.es.js";
-import utils from "./utils";
+import { default as utils, fillKeyFrames } from "./utils";
 
 const followers = new Map();
 
@@ -8,6 +8,12 @@ export default (view, frames, unit) => {
   return stream((emt, {sweep, hook}) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
+    }
+
+    function complete (action) {
+      if(["fade-in", "fade-out"].includes(action)) {
+        emt({action: `${action}-complete`});
+      }
     }
 
     const dom = view.map(e => e.node);
@@ -30,28 +36,33 @@ export default (view, frames, unit) => {
 
     hook.add(({data: [data, {action = "default"}]} = {}) => {
       if (view.length === 0) {
-        emt({action: `${action}-complete`});
-        return;
+        return complete(action);
       }
 
       const allKeyframes = frames.filter(([name]) => name === action);
 
       if (!allKeyframes.length) {
-        emt({action: `${action}-complete`});
-        return;
+        return complete(action);
       }
+
+      const kf = fillKeyFrames(allKeyframes, data);
+
+      if(!kf) {
+        return complete(action);
+      }
+
 
       const classLists = [];
       const animParams = [];
       const animations = new Map();
       const properties = new Map();
 
-      allKeyframes.forEach((keyframe) => {
-        const keyframeProps = keyframe[1] ? keyframe[1](data) : {};
-        const {easing, delay, duration, start} = keyframeProps;
+      kf.forEach((keyframe) => {
 
-        const offsets = keyframe.slice(2).map(([offset, func]) => {
-          const {offset: elemOffset} = func(data);
+        const {easing, delay, duration, start} = keyframe[1];
+
+        const offsets = keyframe.slice(2).map(([offset, data]) => {
+          const {offset: elemOffset} = data;
           return elemOffset || offset;
         });
 
@@ -61,8 +72,8 @@ export default (view, frames, unit) => {
           throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
         }
 
-        keyframe.slice(2).forEach(([offset, func], i) => {
-          const {classList, offset: elemOffset, ...rest} = func(data);
+        keyframe.slice(2).forEach(([offset, data], i) => {
+          const {classList, offset: elemOffset, ...rest} = data;
           if (classList) {
             classLists.push({offset: restoredOffsets[i], classList: Object.entries(classList)});
           }
@@ -114,11 +125,10 @@ export default (view, frames, unit) => {
             })
           });
         });
-        emt({action: `${action}-complete`});
-        return;
+        return complete(action);
       }
 
-      const props = allKeyframes.map((keyframe) => keyframe[1] ? keyframe[1](data) : {});
+      const props = kf.map((keyframe) => keyframe[1]);
 
       const duration = Math.max(...props.map(({duration}) => duration || 0)) * 1000;
 
@@ -126,7 +136,6 @@ export default (view, frames, unit) => {
         targets: dom,
         autoplay: false,
         complete: () => {
-          emt({action: `${action}-complete`});
           if (duration === 0) {
             dom.forEach(elem => {
               classLists.forEach(({classList}) => {
@@ -136,6 +145,7 @@ export default (view, frames, unit) => {
               });
             })
           }
+          return complete(action);
         },
         update: anim => {
           const {progress} = anim;
