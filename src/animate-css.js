@@ -28,7 +28,7 @@ export default (view, frames, unit) => {
       });
     });
 
-    ctr.tocommand(({data: [data, {action = "default"}]} = {}) => {
+    ctr.tocommand( ( action = "default", data ) => {
       if (view.length === 0) {
         e({action: `${action}-complete`});
         return;
