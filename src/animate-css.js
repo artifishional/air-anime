@@ -4,6 +4,10 @@ import { default as utils, fillKeyFrames } from "./utils";
 
 const followers = new Map();
 
+function matchesCount(a, b) {
+  return a.filter(e => b.includes(e)).length;
+}
+
 export default (view, frames, unit) => {
   return stream((emt, {sweep, hook}) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
@@ -117,6 +121,24 @@ export default (view, frames, unit) => {
         });
       }
 
+      /**
+       * Pause the competitive animation in this place,
+       * because next comes the premature exit block
+       */
+      dom.forEach(e => {
+        !followers.has(e) && followers.set(e, []);
+        followers.set(
+          e,
+          followers.get(e).filter(({anim, params}) => {
+            if (matchesCount(params, animParams)) {
+              anim && anim.pause();
+              return false;
+            }
+            return true;
+          })
+        );
+      });
+
       if (![...animations].length) {
         dom.forEach(elem => {
           classLists.forEach(({classList}) => {
@@ -162,6 +184,11 @@ export default (view, frames, unit) => {
         easing: "easeOutCubic"
       });
 
+      dom.forEach(e => {
+        !followers.has(e) && followers.set(e, []);
+        followers.get(e).push({anim: animation, params: animParams});
+      });
+
       const test = [...animations].reduce((acc, [key, value]) => {
         const [{start}] = value;
         if (start !== 0) {
@@ -189,27 +216,6 @@ export default (view, frames, unit) => {
 
       test.offs.forEach(({start, ...rest}) => {
         animation.add({...rest}, -start)
-      });
-
-      function matchesCount(a, b) {
-        return a.filter(e => b.includes(e)).length;
-      }
-
-      dom.forEach(e => {
-        !followers.has(e) && followers.set(e, []);
-
-        followers.set(
-            e,
-            followers.get(e).filter(({anim, params}) => {
-              if (matchesCount(params, animParams)) {
-                anim.pause();
-                return false;
-              }
-              return true;
-            })
-        );
-
-        followers.get(e).push({anim: animation, params: animParams});
       });
 
       animation.play();
