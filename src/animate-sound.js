@@ -61,6 +61,9 @@ export default (view, frames, layer) => {
             if (!duration) {
                 resources.filter(({ name }) => soundNames.indexOf(name) > -1).forEach(({ sound }) => {
                     sound.play();
+                    sound.on('unlock', function() {
+                        sound.stop();
+                    });
                     e({ action: `${action}-complete` });
                 });
             } else {
@@ -109,6 +112,9 @@ export default (view, frames, layer) => {
                         resources.filter(({ name }) => url === name).forEach(({ sound }) => {
                             const timer = setTimeout(() => {
                                 const id = sound.play();
+                                sound.on('unlock', function() {
+                                    sound.stop();
+                                });
                                 sounds.push({ id, sound });
                                 sound.on('end', () => {
                                     clearTimeout(timer);
