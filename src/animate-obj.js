@@ -97,9 +97,7 @@ export default (view, frames, layer) => {
           updateAll(state);
         },
         complete: () => {
-          if (duration === 0) {
-            updateAll(state);
-          }
+          updateAll(state);
           emt({ action: `${action}-complete` });
         },
         autoplay: false

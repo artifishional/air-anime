@@ -158,15 +158,13 @@ export default (view, frames, unit) => {
         targets: dom,
         autoplay: false,
         complete: () => {
-          if (duration === 0) {
-            dom.forEach(elem => {
-              classLists.forEach(({classList}) => {
-                classList.forEach(([className, value]) => {
-                  elem.classList.toggle(className, value);
-                })
-              });
-            })
-          }
+          dom.forEach(elem => {
+            classLists.forEach(({classList}) => {
+              classList.forEach(([className, value]) => {
+                elem.classList.toggle(className, value);
+              })
+            });
+          });
           return complete(action);
         },
         update: anim => {
