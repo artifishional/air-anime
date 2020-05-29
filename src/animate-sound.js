@@ -60,9 +60,7 @@ export default (view, frames, layer) => {
 
             if (!duration) {
                 resources.filter(({ name }) => soundNames.indexOf(name) > -1).forEach(({ sound }) => {
-                    if (Howler.state === 'running') {
-                      sound.play();
-                    }
+                    sound.play();
                     emt({ action: `${action}-complete` });
                 });
             } else {
@@ -105,9 +103,8 @@ export default (view, frames, layer) => {
                         }
                     });
                 });
-
-                if (Howler.state === 'running') {
-                  [...keyframes].filter(([key, value]) => key === 'sound').forEach(([, value]) => {
+                
+                [...keyframes].filter(([key, value]) => key === 'sound').forEach(([, value]) => {
                     value.forEach(({ value: url, duration }) => {
                         resources.filter(({ name }) => url === name).forEach(({ sound }) => {
                             const timer = setTimeout(() => {
@@ -120,14 +117,11 @@ export default (view, frames, layer) => {
                             timers.push(timer);
                         });
                     });
-                  });
-                  setTimeout(() => {
-                      animationClear();
-                      emt({ action: `${action}-complete` });
-                  }, duration);
-                } else {
-                  emt({ action: `${action}-complete` });
-                }
+                });
+                setTimeout(() => {
+                    animationClear();
+                    emt({ action: `${action}-complete` });
+                }, duration);
             }
         });
     });
