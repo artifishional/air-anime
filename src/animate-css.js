@@ -1,4 +1,4 @@
-import {stream} from "air-stream";
+import { stream2 as stream } from 'air-stream';
 import anime from "animejs/lib/anime.es.js";
 import { default as utils, fillKeyFrames } from "./utils";
 
@@ -9,21 +9,21 @@ function matchesCount(a, b) {
 }
 
 export default (view, frames, unit) => {
-  return stream((emt, {sweep, hook}) => {
+  return stream.fromCbFunc((cb, ctr) => {
     if (!view.map(({type}) => type).every(e => e === "active")) {
       throw "Error: expected all nodes to have type `active`";
     }
 
     function complete (action) {
-      if(["fade-in", "fade-out"].includes(action)) {
-        emt({action: `${action}-complete`});
+      if(action === 'fade-out') {
+        cb({ action: `${action}-complete` });
       }
     }
 
     const dom = view.map(e => e.node);
     let animation = null;
 
-    sweep.add(() => {
+    ctr.todisconnect(() => {
       dom.forEach(e => {
         const value = followers.get(e);
         if (value) {
@@ -37,8 +37,9 @@ export default (view, frames, unit) => {
         }
       });
     });
-
-    hook.add(({data: [data, {action = "default"}]} = {}) => {
+  
+    ctr.tocommand((action, data) => {
+      
       if (view.length === 0) {
         return complete(action);
       }
