@@ -1,57 +1,49 @@
-import { stream } from "air-stream";
-import anime from "animejs/lib/anime.es.js";
-import utils from "./utils";
+import anime from 'animejs/lib/anime.es.js';
+import { stream2 as stream } from 'air-stream';
+import utils from './utils';
 
-export default (view, frames, layer) => {
-  return stream((emt, { sweep, hook }) => {
+export default (view, frames, unit) => {
+  return stream.fromCbFunc((cb, ctr) => {
     if (!view.map(({ type }) => type).every(e => e === "data")) {
       throw "Error: expected all nodes to have type `data`";
     }
-
     let animation = null;
-
     const state = {};
     function updateAll(data) {
       view.map(v => v.update(data));
     }
-
+    function complete (action) {
+      if(action === 'fade-out') {
+        cb({ action: `${action}-complete` });
+      }
+    }
     function animationClear() {
       if (animation) {
         animation.pause();
         animation = null;
       }
     }
-
-    sweep.add(() => animationClear);
-
-    hook.add(({ data: [data, { action = "default" }] } = {}) => {
+    ctr.todisconnect(animationClear);
+    ctr.tocommand((action, data) => {
       animationClear();
-
       const keyframe = frames.find(([name]) => name === action);
-
       if (!keyframe) {
         updateAll(data);
-        emt({ action: `${action}-complete` });
+        complete(action);
         return;
       }
-
       const prop = keyframe[1](data);
-
       const keys = keyframe.slice(2).map(([offset, prop]) => ({
         offset,
         ...prop(data)
       }));
-
       if (!utils.checkOffsetValidity(keys)) {
         throw "Error: animation error, keyframe offset wrong. Valid offset: >= 0, <= 1, ascending order.";
       }
-
       const keyframes = new Map();
-
       const { easing = "easeOutElastic(1, .5)" } = prop;
       const duration = prop.duration * 1000 || 0;
       const start = prop.start * 1000 || 0;
-
       if (keys[0].offset === 0) {
         const { offset, ...vars } = keys[0];
         Object.entries(vars).forEach(([key]) => {
@@ -98,7 +90,7 @@ export default (view, frames, layer) => {
         },
         complete: () => {
           updateAll(state);
-          emt({ action: `${action}-complete` });
+          complete();
         },
         autoplay: false
       };
