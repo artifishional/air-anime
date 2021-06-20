@@ -1,4 +1,4 @@
-import { stream } from 'air-stream';
+import { stream2 as stream } from 'air-stream';
 import utils from './utils';
 
 export default (view, frames, layer) => {
