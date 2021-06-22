@@ -1,6 +1,6 @@
 import { stream2 as stream } from 'air-stream';
-import anime from "animejs/lib/anime.es.js";
 import { default as utils, fillKeyFrames } from "./utils";
+import anime from 'animejs';
 
 const followers = new Map();
 

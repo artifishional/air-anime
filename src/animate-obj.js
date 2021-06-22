@@ -1,4 +1,4 @@
-import anime from 'animejs/lib/anime.es.js';
+import anime from 'animejs';
 import { stream2 as stream } from 'air-stream';
 import utils from './utils';
 

@@ -1,7 +1,6 @@
 import animateCss from "./animate-css";
 import animateObj from "./animate-obj";
 import animateSound from "./animate-sound";
-export { default as anime } from "animejs/lib/anime.es.js";
 
 export default (view, ...other) => {
   if (view.length === 0) {
