@@ -1,5 +1,5 @@
 import { stream2 as stream } from 'air-stream';
-import utils from './utils';
+import utils from './utils.mjs';
 
 export default (view, frames, layer) => {
     return stream((emt, { sweep, hook }) => {

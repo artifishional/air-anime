@@ -1,4 +1,4 @@
-import animate from "../src/index";
+import animate from "../src/index.mjs";
 import {Howl} from "Howler";
 
 const streamCheckKeyframes = animate(

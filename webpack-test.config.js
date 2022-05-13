@@ -2,7 +2,7 @@ module.exports = {
   devtool: '(none)',
   mode: 'development',
   entry: {
-    'animate': './src/index.js'
+    'animate': './src/index.mjs'
   },
   output: {
     library: 'animate',

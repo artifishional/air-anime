@@ -1,6 +1,6 @@
 import anime from 'animejs';
 import { stream2 as stream } from 'air-stream';
-import utils from './utils';
+import utils from './utils.mjs';
 
 export default (view, frames, unit) => {
   return stream.fromCbFunc((cb, ctr) => {

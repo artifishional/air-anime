@@ -2,7 +2,7 @@ module.exports = {
   devtool: "(none)",
   mode: "development",
   entry: {
-    debug: "./debug/index.js"
+    debug: "./debug/index.mjs"
   },
   output: {
     path: `${__dirname}/dist`
